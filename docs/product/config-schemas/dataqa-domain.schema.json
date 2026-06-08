@@ -1,0 +1,1036 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/data-agent-console/dataqa-domain.schema.json",
+  "title": "Data Agent Console Data&QA Domain Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "agent_apps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AgentApp"
+      }
+    },
+    "agent_profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AgentProfile"
+      }
+    },
+    "task_types": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TaskType"
+      }
+    },
+    "semantic_metrics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SemanticMetric"
+      }
+    },
+    "semantic_dimensions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SemanticDimension"
+      }
+    },
+    "business_entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BusinessEntity"
+      }
+    },
+    "clarification_templates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ClarificationTemplate"
+      }
+    },
+    "analysis_workflows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AnalysisWorkflow"
+      }
+    },
+    "answer_templates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AnswerTemplate"
+      }
+    },
+    "knowledge_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/KnowledgeSource"
+      }
+    },
+    "case_items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CaseItem"
+      }
+    },
+    "eval_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EvalRun"
+      }
+    },
+    "feedback_items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FeedbackItem"
+      }
+    },
+    "product_releases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ProductRelease"
+      }
+    }
+  },
+  "$defs": {
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ConfigStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "disabled",
+        "archived"
+      ]
+    },
+    "ReleaseStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_eval",
+        "pending_approval",
+        "published",
+        "rolled_back",
+        "rejected"
+      ]
+    },
+    "Decision": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "ASK",
+        "DENY"
+      ]
+    },
+    "SensitivityLevel": {
+      "type": "string",
+      "enum": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ]
+    },
+    "RiskLevel": {
+      "type": "string",
+      "enum": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5"
+      ]
+    },
+    "StringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "BaseConfig": {
+      "type": "object",
+      "required": [
+        "id",
+        "tenant_id",
+        "name",
+        "status",
+        "version",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ConfigStatus"
+        },
+        "version": {
+          "type": "string"
+        },
+        "owner_ids": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "tags": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "created_at": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/DateTime"
+        }
+      }
+    },
+    "AgentApp": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "app_type",
+            "business_domain_ids",
+            "profile_id",
+            "enabled_task_type_ids",
+            "runtime_release_id"
+          ],
+          "properties": {
+            "app_type": {
+              "type": "string",
+              "enum": [
+                "data_qa",
+                "knowledge_qa",
+                "analysis_advisor",
+                "governance_assistant"
+              ]
+            },
+            "business_domain_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "profile_id": {
+              "type": "string"
+            },
+            "enabled_task_type_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "runtime_release_id": {
+              "type": "string"
+            },
+            "product_release_id": {
+              "type": "string"
+            },
+            "entry_channels": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "console",
+                  "embedded_bi",
+                  "api",
+                  "feishu",
+                  "待确认"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AgentProfile": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "display_name",
+            "audience_roles",
+            "default_language",
+            "tone"
+          ],
+          "properties": {
+            "display_name": {
+              "type": "string"
+            },
+            "audience_roles": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "default_language": {
+              "type": "string",
+              "enum": [
+                "zh-CN",
+                "en-US"
+              ]
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "executive",
+                "analyst",
+                "operator",
+                "technical"
+              ]
+            },
+            "safety_disclaimer_template_id": {
+              "type": "string"
+            },
+            "default_clarification_template_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "allowed_knowledge_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        }
+      ]
+    },
+    "TaskType": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "code",
+            "risk_level",
+            "requires_clarification",
+            "requires_eval_gate"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "metric_query",
+                "metric_explanation",
+                "knowledge_qa",
+                "anomaly_diagnosis",
+                "attribution_analysis",
+                "business_advice",
+                "governance_task"
+              ]
+            },
+            "risk_level": {
+              "$ref": "#/$defs/RiskLevel"
+            },
+            "requires_clarification": {
+              "type": "boolean"
+            },
+            "requires_eval_gate": {
+              "type": "boolean"
+            },
+            "allowed_tool_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "default_workflow_id": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "SemanticMetric": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "metric_code",
+            "display_name",
+            "business_definition",
+            "formula",
+            "aggregation",
+            "data_source_id",
+            "sensitivity_level"
+          ],
+          "properties": {
+            "metric_code": {
+              "type": "string"
+            },
+            "display_name": {
+              "type": "string"
+            },
+            "business_definition": {
+              "type": "string"
+            },
+            "formula": {
+              "type": "string"
+            },
+            "unit": {
+              "type": "string"
+            },
+            "aggregation": {
+              "type": "string",
+              "enum": [
+                "sum",
+                "count",
+                "count_distinct",
+                "avg",
+                "ratio",
+                "custom"
+              ]
+            },
+            "dimension_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "business_entity_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_source_id": {
+              "type": "string"
+            },
+            "source_table": {
+              "type": "string"
+            },
+            "source_fields": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "sensitivity_level": {
+              "$ref": "#/$defs/SensitivityLevel"
+            },
+            "owner_id": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "SemanticDimension": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "dimension_code",
+            "display_name",
+            "dimension_type",
+            "data_source_id",
+            "source_field",
+            "sensitivity_level"
+          ],
+          "properties": {
+            "dimension_code": {
+              "type": "string"
+            },
+            "display_name": {
+              "type": "string"
+            },
+            "dimension_type": {
+              "type": "string",
+              "enum": [
+                "time",
+                "geo",
+                "organization",
+                "product",
+                "channel",
+                "customer",
+                "reason",
+                "status",
+                "custom"
+              ]
+            },
+            "data_source_id": {
+              "type": "string"
+            },
+            "source_field": {
+              "type": "string"
+            },
+            "enum_values": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "aliases": {
+                    "$ref": "#/$defs/StringArray"
+                  }
+                }
+              }
+            },
+            "synonyms": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "default_filter": {
+              "type": "string"
+            },
+            "sensitivity_level": {
+              "$ref": "#/$defs/SensitivityLevel"
+            }
+          }
+        }
+      ]
+    },
+    "BusinessEntity": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "entity_code",
+            "display_name",
+            "entity_type"
+          ],
+          "properties": {
+            "entity_code": {
+              "type": "string"
+            },
+            "display_name": {
+              "type": "string"
+            },
+            "entity_type": {
+              "type": "string",
+              "enum": [
+                "domain",
+                "subject_area",
+                "business_object",
+                "process"
+              ]
+            },
+            "parent_entity_id": {
+              "type": "string"
+            },
+            "data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "metric_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "dimension_ids": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        }
+      ]
+    },
+    "ClarificationTemplate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "trigger_type",
+            "question_template",
+            "candidate_source",
+            "blocking"
+          ],
+          "properties": {
+            "trigger_type": {
+              "type": "string",
+              "enum": [
+                "missing_time",
+                "missing_metric",
+                "missing_dimension",
+                "ambiguous_entity",
+                "ambiguous_grain",
+                "conflicting_filters",
+                "high_risk_intent"
+              ]
+            },
+            "question_template": {
+              "type": "string"
+            },
+            "candidate_source": {
+              "type": "string",
+              "enum": [
+                "static",
+                "semantic_dimension",
+                "semantic_metric",
+                "knowledge_source",
+                "runtime_policy"
+              ]
+            },
+            "candidate_refs": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "blocking": {
+              "type": "boolean"
+            },
+            "default_choice": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "AnalysisWorkflow": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "workflow_type",
+            "task_type_ids",
+            "steps",
+            "allowed_tool_ids",
+            "max_steps",
+            "fallback_behavior"
+          ],
+          "properties": {
+            "workflow_type": {
+              "type": "string",
+              "enum": [
+                "metric_query",
+                "metric_explanation",
+                "diagnosis",
+                "attribution",
+                "recommendation",
+                "knowledge_qa"
+              ]
+            },
+            "task_type_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "step_id",
+                  "action"
+                ],
+                "properties": {
+                  "step_id": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "tool_id": {
+                    "type": "string"
+                  },
+                  "on_failure": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "allowed_tool_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "runtime_policy_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "max_steps": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "fallback_behavior": {
+              "type": "string",
+              "enum": [
+                "clarify",
+                "deny",
+                "manual_review",
+                "safe_summary"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "AnswerTemplate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "template_type",
+            "sections",
+            "template_body"
+          ],
+          "properties": {
+            "template_type": {
+              "type": "string",
+              "enum": [
+                "metric_answer",
+                "metric_explanation",
+                "diagnosis",
+                "business_advice",
+                "knowledge_answer",
+                "safety_denial",
+                "clarification"
+              ]
+            },
+            "sections": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "template_body": {
+              "type": "string"
+            },
+            "required_disclaimers": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "forbidden_phrases": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "metric_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "task_type_ids": {
+              "$ref": "#/$defs/StringArray"
+            }
+          }
+        }
+      ]
+    },
+    "KnowledgeSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "source_type",
+            "sync_mode",
+            "sensitivity_level",
+            "allow_retrieval"
+          ],
+          "properties": {
+            "source_type": {
+              "type": "string",
+              "enum": [
+                "doc",
+                "wiki",
+                "metric_card",
+                "policy_doc",
+                "faq",
+                "runbook",
+                "external_kb"
+              ]
+            },
+            "connector_id": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "sync_mode": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "scheduled",
+                "webhook",
+                "待确认"
+              ]
+            },
+            "sensitivity_level": {
+              "$ref": "#/$defs/SensitivityLevel"
+            },
+            "allow_retrieval": {
+              "type": "boolean"
+            },
+            "last_synced_at": {
+              "$ref": "#/$defs/DateTime"
+            }
+          }
+        }
+      ]
+    },
+    "CaseItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "case_type",
+            "task_type_id",
+            "user_query",
+            "difficulty"
+          ],
+          "properties": {
+            "case_type": {
+              "type": "string",
+              "enum": [
+                "golden",
+                "clarification",
+                "negative",
+                "red_team",
+                "bad_case",
+                "regression"
+              ]
+            },
+            "agent_app_id": {
+              "type": "string"
+            },
+            "task_type_id": {
+              "type": "string"
+            },
+            "user_query": {
+              "type": "string"
+            },
+            "expected_policy_decision": {
+              "$ref": "#/$defs/Decision"
+            },
+            "expected_sql": {
+              "type": "string"
+            },
+            "expected_answer_key_points": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "must_not_include": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "difficulty": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard",
+                "adversarial"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "EvalRun": {
+      "type": "object",
+      "required": [
+        "id",
+        "tenant_id",
+        "environment_id",
+        "agent_app_id",
+        "case_item_ids",
+        "run_type",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "environment_id": {
+          "type": "string"
+        },
+        "agent_app_id": {
+          "type": "string"
+        },
+        "product_release_id": {
+          "type": "string"
+        },
+        "runtime_release_id": {
+          "type": "string"
+        },
+        "case_item_ids": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "run_type": {
+          "type": "string",
+          "enum": [
+            "smoke",
+            "regression",
+            "red_team",
+            "release_gate",
+            "manual"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "passed",
+            "failed",
+            "blocked",
+            "cancelled"
+          ]
+        },
+        "pass_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "safety_pass_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "failed_case_ids": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "started_at": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/DateTime"
+        }
+      },
+      "additionalProperties": false
+    },
+    "FeedbackItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "tenant_id",
+        "agent_app_id",
+        "feedback_type",
+        "summary",
+        "routed_to_case",
+        "status",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "environment_id": {
+          "type": "string"
+        },
+        "agent_app_id": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "feedback_type": {
+          "type": "string",
+          "enum": [
+            "positive",
+            "negative",
+            "correction",
+            "unsafe",
+            "missing_answer",
+            "bad_case"
+          ]
+        },
+        "rating": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "summary": {
+          "type": "string"
+        },
+        "routed_to_case": {
+          "type": "boolean"
+        },
+        "case_item_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "triaged",
+            "in_progress",
+            "resolved",
+            "closed"
+          ]
+        },
+        "created_at": {
+          "$ref": "#/$defs/DateTime"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProductRelease": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_id",
+            "release_version",
+            "release_status",
+            "agent_app_ids",
+            "runtime_release_id"
+          ],
+          "properties": {
+            "environment_id": {
+              "type": "string"
+            },
+            "release_version": {
+              "type": "string"
+            },
+            "release_status": {
+              "$ref": "#/$defs/ReleaseStatus"
+            },
+            "agent_app_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "agent_profile_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "task_type_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "semantic_metric_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "semantic_dimension_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "workflow_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "answer_template_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "case_item_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "eval_run_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "runtime_release_id": {
+              "type": "string"
+            },
+            "published_at": {
+              "$ref": "#/$defs/DateTime"
+            },
+            "published_by": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

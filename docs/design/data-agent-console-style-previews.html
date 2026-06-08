@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Agent Console · 3 Style Previews</title>
+    <style>
+      :root {
+        --primary: #0091ff;
+        --secondary: #0f172a;
+        --accent: #ff6b00;
+        --background: #f8fafc;
+        --ink: #152033;
+        --muted: #64748b;
+        --line: #dbe5ef;
+        --white: #ffffff;
+        --success: #12a150;
+        --danger: #d92d20;
+        --warning: #b86b00;
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--ink);
+        background: #e9eef5;
+        text-rendering: geometricPrecision;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.84)),
+          #eef3f8;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      .design-board {
+        width: min(1800px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 34px 0 56px;
+      }
+
+      .board-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 28px;
+        align-items: end;
+        margin-bottom: 24px;
+      }
+
+      .board-header p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .board-header h1 {
+        margin: 8px 0 10px;
+        color: var(--secondary);
+        font-size: 34px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .eyebrow {
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .palette {
+        display: grid;
+        grid-template-columns: repeat(4, 88px);
+        gap: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .chip {
+        min-height: 62px;
+        padding: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: var(--white);
+      }
+
+      .chip span {
+        display: block;
+        width: 100%;
+        height: 18px;
+        margin-bottom: 8px;
+      }
+
+      .chip strong {
+        display: block;
+        color: var(--secondary);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        letter-spacing: 0;
+      }
+
+      .preview-stack {
+        display: grid;
+        gap: 32px;
+      }
+
+      .style-card {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.11);
+      }
+
+      .style-meta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.36fr);
+        gap: 28px;
+        padding: 22px 24px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        background: rgba(248, 250, 252, 0.9);
+      }
+
+      .style-meta h2 {
+        margin: 4px 0 8px;
+        color: var(--secondary);
+        font-size: 25px;
+        letter-spacing: 0;
+      }
+
+      .style-meta p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .style-meta dl {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .style-meta div + div {
+        align-self: center;
+      }
+
+      .style-meta dt {
+        color: var(--secondary);
+        font-weight: 800;
+      }
+
+      .style-meta dd {
+        margin: -25px 0 0 86px;
+      }
+
+      .app-frame {
+        height: 720px;
+        border: 14px solid #111827;
+        background: var(--background);
+      }
+
+      .top-pill,
+      .status-pill,
+      .tiny-tag,
+      .tab-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .kpi {
+        display: grid;
+        gap: 7px;
+      }
+
+      .kpi span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .kpi strong {
+        color: var(--secondary);
+        font-size: 28px;
+        letter-spacing: -0.01em;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0;
+      }
+
+      .mini-table {
+        display: grid;
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .mini-row {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr;
+        gap: 10px;
+        align-items: center;
+        min-height: 42px;
+        padding: 0 12px;
+        background: #fff;
+        color: #334155;
+        font-size: 12px;
+      }
+
+      .mini-row.header {
+        color: #64748b;
+        background: #f7fafc;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .primary-action {
+        border: 0;
+        color: #fff;
+        background: var(--primary);
+      }
+
+      .accent-action {
+        border: 0;
+        color: #fff;
+        background: var(--accent);
+      }
+
+      .ghost-action {
+        color: var(--secondary);
+        background: transparent;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+      }
+
+      .option-note {
+        margin-top: 14px;
+        padding: 14px 16px;
+        color: #354153;
+        background: rgba(0, 145, 255, 0.08);
+        border-left: 3px solid var(--primary);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      /* Option A */
+      .option-a .app-frame {
+        display: grid;
+        grid-template-columns: 264px minmax(0, 1fr);
+        background: var(--background);
+      }
+
+      .a-sidebar {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: 24px 18px;
+        color: #dbeafe;
+        background: var(--secondary);
+      }
+
+      .a-brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding-bottom: 22px;
+      }
+
+      .a-logo {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        color: #fff;
+        background: var(--primary);
+        font-weight: 900;
+      }
+
+      .a-brand strong {
+        display: block;
+        color: #fff;
+      }
+
+      .a-brand span {
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .a-nav {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+      }
+
+      .a-nav button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 42px;
+        padding: 0 12px;
+        color: #b9c6d7;
+        text-align: left;
+        background: transparent;
+        border: 1px solid transparent;
+      }
+
+      .a-nav button.active {
+        color: #fff;
+        background: rgba(0, 145, 255, 0.16);
+        border-color: rgba(0, 145, 255, 0.44);
+      }
+
+      .a-nav button.active span:last-child {
+        color: var(--accent);
+      }
+
+      .a-user {
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        color: #d6e2f1;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .a-main {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+      }
+
+      .a-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 72px;
+        padding: 0 28px;
+        background: rgba(255, 255, 255, 0.92);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .a-segments {
+        display: flex;
+        gap: 7px;
+      }
+
+      .a-segments span,
+      .a-topbar button {
+        padding: 9px 13px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: #fff;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .a-segments span.active {
+        color: #fff;
+        background: var(--secondary);
+      }
+
+      .a-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 342px;
+        gap: 20px;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .a-hero {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 18px;
+      }
+
+      .a-hero-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: start;
+        padding: 22px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .a-hero-head h3 {
+        margin: 4px 0 9px;
+        color: var(--secondary);
+        font-size: 28px;
+        line-height: 1.15;
+      }
+
+      .a-hero-head p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .a-actions {
+        display: flex;
+        gap: 9px;
+      }
+
+      .a-actions button,
+      .b-actions button,
+      .c-actions button {
+        min-height: 40px;
+        padding: 0 14px;
+        font-weight: 800;
+      }
+
+      .a-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+
+      .a-metrics .kpi {
+        padding: 17px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .a-work {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        min-height: 0;
+      }
+
+      .a-panel,
+      .a-trace {
+        min-height: 0;
+        padding: 18px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .panel-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+
+      .panel-title h4 {
+        margin: 0;
+        color: var(--secondary);
+        font-size: 15px;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+
+      .pipeline-step {
+        min-height: 92px;
+        padding: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: #f8fafc;
+      }
+
+      .pipeline-step strong {
+        display: block;
+        margin-bottom: 9px;
+        color: var(--secondary);
+        font-size: 12px;
+      }
+
+      .pipeline-step span {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .pipeline-step.warn {
+        background: rgba(255, 107, 0, 0.08);
+        border-color: rgba(255, 107, 0, 0.28);
+      }
+
+      .a-side {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+      }
+
+      .a-card {
+        padding: 18px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .a-card h4 {
+        margin: 0 0 12px;
+        color: var(--secondary);
+      }
+
+      .trace-line {
+        display: grid;
+        gap: 10px;
+      }
+
+      .trace-line div {
+        position: relative;
+        padding-left: 18px;
+        color: #334155;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .trace-line div::before {
+        content: "";
+        position: absolute;
+        top: 6px;
+        left: 0;
+        width: 8px;
+        height: 8px;
+        background: var(--primary);
+      }
+
+      /* Option B */
+      .option-b .app-frame {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr) 360px;
+        color: #dbeafe;
+        background:
+          linear-gradient(90deg, rgba(0, 145, 255, 0.12) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(0, 145, 255, 0.1) 1px, transparent 1px),
+          #07111f;
+        background-size: 34px 34px;
+      }
+
+      .b-rail {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: 18px 12px;
+        background: rgba(15, 23, 42, 0.94);
+        border-right: 1px solid rgba(148, 163, 184, 0.16);
+      }
+
+      .b-mark {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        color: white;
+        background: var(--primary);
+        font-weight: 900;
+      }
+
+      .b-icons {
+        display: grid;
+        align-content: start;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .b-icons span {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        color: #93a7bd;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .b-icons span.active {
+        color: #fff;
+        border-color: rgba(0, 145, 255, 0.7);
+        background: rgba(0, 145, 255, 0.18);
+      }
+
+      .b-main {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+      }
+
+      .b-command {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: center;
+        min-height: 82px;
+        padding: 0 24px;
+        background: rgba(7, 17, 31, 0.78);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      }
+
+      .b-command h3 {
+        margin: 0 0 5px;
+        color: #fff;
+        font-size: 24px;
+      }
+
+      .b-command p {
+        margin: 0;
+        color: #8ea3bb;
+        font-size: 13px;
+      }
+
+      .b-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .b-actions button {
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        color: #dbeafe;
+        background: rgba(15, 23, 42, 0.7);
+      }
+
+      .b-actions button.run {
+        color: white;
+        background: var(--accent);
+        border-color: transparent;
+      }
+
+      .b-content {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 16px;
+        padding: 18px;
+        overflow: hidden;
+      }
+
+      .b-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+
+      .b-kpis .kpi {
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.82);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+      }
+
+      .b-kpis .kpi strong {
+        color: #fff;
+      }
+
+      .b-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 14px;
+        min-height: 0;
+      }
+
+      .b-panel {
+        min-height: 0;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.82);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .b-panel h4,
+      .b-side h4 {
+        margin: 0 0 12px;
+        color: #fff;
+      }
+
+      .b-sql {
+        min-height: 128px;
+        padding: 14px;
+        color: #b7c8d9;
+        background: #040b14;
+        border: 1px solid rgba(0, 145, 255, 0.28);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .b-pipeline {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .b-step {
+        display: grid;
+        grid-template-columns: 130px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 10px;
+        background: rgba(2, 6, 23, 0.62);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        color: #aebfd1;
+        font-size: 12px;
+      }
+
+      .b-step strong {
+        color: #fff;
+      }
+
+      .b-step em {
+        color: var(--accent);
+        font-style: normal;
+        font-weight: 900;
+      }
+
+      .b-side {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 14px;
+        padding: 18px;
+        background: rgba(7, 17, 31, 0.86);
+        border-left: 1px solid rgba(148, 163, 184, 0.16);
+      }
+
+      .b-side-card {
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.76);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+
+      .b-side-card p {
+        margin: 0;
+        color: #8ea3bb;
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .b-side .mini-row {
+        color: #cbd5e1;
+        background: rgba(15, 23, 42, 0.78);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      .b-side .mini-row.header {
+        color: #7f95ad;
+        background: rgba(2, 6, 23, 0.74);
+      }
+
+      /* Option C */
+      .option-c .app-frame {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        background: #f8fafc;
+      }
+
+      .c-top {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 24px;
+        align-items: center;
+        min-height: 74px;
+        padding: 0 28px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        background: #fff;
+      }
+
+      .c-brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .c-brand span {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        color: #fff;
+        background: var(--secondary);
+        font-weight: 900;
+      }
+
+      .c-brand strong {
+        color: var(--secondary);
+      }
+
+      .c-nav {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .c-nav button {
+        min-height: 38px;
+        padding: 0 13px;
+        color: #475569;
+        background: transparent;
+        border: 1px solid transparent;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .c-nav button.active {
+        color: var(--primary);
+        background: rgba(0, 145, 255, 0.08);
+        border-color: rgba(0, 145, 255, 0.16);
+      }
+
+      .c-context {
+        display: flex;
+        gap: 8px;
+      }
+
+      .c-context span {
+        padding: 8px 10px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        color: #334155;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .c-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 22px;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .c-workspace {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .c-question {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: end;
+        padding: 22px;
+        color: #fff;
+        background: var(--secondary);
+      }
+
+      .c-question h3 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        line-height: 1.18;
+      }
+
+      .c-question p {
+        margin: 0;
+        color: #aebfd1;
+      }
+
+      .c-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .c-actions button {
+        min-width: 132px;
+      }
+
+      .c-understand {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+      }
+
+      .c-understand div {
+        min-height: 78px;
+        padding: 13px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .c-understand span {
+        display: block;
+        margin-bottom: 7px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .c-understand strong {
+        color: var(--secondary);
+        font-size: 14px;
+      }
+
+      .c-answer-area {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .c-plan,
+      .c-answer {
+        padding: 18px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .c-plan h4,
+      .c-answer h4,
+      .c-trace h4 {
+        margin: 0 0 14px;
+        color: var(--secondary);
+      }
+
+      .c-plan ol {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .c-plan li {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .c-plan li span:first-child {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        color: #fff;
+        background: var(--primary);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .c-plan li strong {
+        display: block;
+        color: #1e293b;
+        font-size: 13px;
+      }
+
+      .c-plan li small {
+        color: #64748b;
+        line-height: 1.5;
+      }
+
+      .c-answer .answer-value {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin: 2px 0 12px;
+      }
+
+      .answer-value strong {
+        color: var(--secondary);
+        font-size: 48px;
+        line-height: 1;
+      }
+
+      .answer-value span {
+        color: var(--accent);
+        font-weight: 900;
+      }
+
+      .c-answer p {
+        color: #475569;
+        line-height: 1.75;
+      }
+
+      .c-trace {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 0;
+        padding: 18px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .c-timeline {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+      }
+
+      .c-timeline div {
+        padding: 12px;
+        background: #f8fafc;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .c-timeline strong {
+        display: block;
+        color: var(--secondary);
+        font-size: 13px;
+      }
+
+      .c-timeline span {
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      .feedback-bar {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .feedback-bar input {
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        color: #334155;
+      }
+
+      .feedback-bar button {
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: white;
+        color: #334155;
+        font-weight: 800;
+      }
+
+      @media (max-width: 1200px) {
+        .board-header,
+        .style-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .app-frame {
+          overflow: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="design-board">
+      <header class="board-header">
+        <div>
+          <div class="eyebrow">Style Exploration · Data Agent Console</div>
+          <h1>基于 #0091FF / #0F172A / #FF6B00 / #F8FAFC 的 3 个界面方向</h1>
+          <p>
+            假设：保留当前产品的信息架构和“左侧导航 + 顶部上下文 + 主工作区”的基本框架，
+            但重新定义视觉层次、运行工作台表达和现代科技感。以下只做设计预览，不改生产代码。
+          </p>
+        </div>
+        <aside class="palette" aria-label="Base palette">
+          <div class="chip"><span style="background:#0091FF"></span><strong>#0091FF</strong></div>
+          <div class="chip"><span style="background:#0F172A"></span><strong>#0F172A</strong></div>
+          <div class="chip"><span style="background:#FF6B00"></span><strong>#FF6B00</strong></div>
+          <div class="chip"><span style="background:#F8FAFC"></span><strong>#F8FAFC</strong></div>
+        </aside>
+      </header>
+
+      <section class="preview-stack">
+        <article class="style-card option-a">
+          <div class="style-meta">
+            <div>
+              <div class="eyebrow">Option A · Enterprise Control</div>
+              <h2>稳健型企业科技：清爽、可信、适合正式演示</h2>
+              <p>
+                保留 B 端平台的秩序感，强化“今日阻断项”和“安全链路”的可读性。适合管理层评审、
+                数据治理团队日常使用，也最容易从当前代码渐进改造。
+              </p>
+            </div>
+            <div>
+              <dl>
+                <dt>关键词</dt><dd>克制、可信、清晰、易落地</dd>
+                <dt>适用</dt><dd>MVP 正式版、客户演示、内部运营平台</dd>
+                <dt>风险</dt><dd>视觉惊艳度中等，但产品成熟感最高</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="app-frame">
+            <aside class="a-sidebar">
+              <div class="a-brand">
+                <div class="a-logo">DA</div>
+                <div><strong>Data Agent Console</strong><span>Runtime + Data&QA</span></div>
+              </div>
+              <nav class="a-nav">
+                <button class="active"><span>首页看板</span><span>●</span></button>
+                <button><span>Runtime 工作台</span><span>5</span></button>
+                <button><span>问数工作台</span><span>2</span></button>
+                <button><span>Case / Eval</span><span>12</span></button>
+                <button><span>审批中心</span><span>3</span></button>
+                <button><span>发布中心</span><span></span></button>
+              </nav>
+              <div class="a-user">
+                <strong>生产环境</strong>
+                <span>数据产品经理 · Mock API · 0.00.1</span>
+              </div>
+            </aside>
+            <section class="a-main">
+              <header class="a-topbar">
+                <div class="a-segments">
+                  <span>开发</span><span>测试</span><span>预发</span><span class="active">生产</span>
+                </div>
+                <button>设置</button>
+              </header>
+              <div class="a-content">
+                <section class="a-hero">
+                  <div class="a-hero-head">
+                    <div>
+                      <div class="eyebrow">Operations Dashboard</div>
+                      <h3>先解除上线和生产安全阻断</h3>
+                      <p>把审批、Eval 阻断、Bad Case 汇聚为今天最重要的执行队列。</p>
+                    </div>
+                    <div class="a-actions">
+                      <button class="primary-action">运行上线评测</button>
+                      <button class="ghost-action">查看审计</button>
+                    </div>
+                  </div>
+                  <div class="a-metrics">
+                    <div class="kpi"><span>待审批</span><strong>3</strong><span>高风险 SQL 2 条</span></div>
+                    <div class="kpi"><span>Eval 通过率</span><strong>91%</strong><span>需修复 4 个 Case</span></div>
+                    <div class="kpi"><span>DLP 命中</span><strong>28</strong><span>PII 导出已拦截</span></div>
+                    <div class="kpi"><span>Runtime 健康</span><strong>99.9</strong><span>Gateway 正常</span></div>
+                  </div>
+                  <div class="a-work">
+                    <div class="a-panel">
+                      <div class="panel-title"><h4>Runtime 安全链路</h4><span class="tiny-tag">ASK</span></div>
+                      <div class="pipeline">
+                        <div class="pipeline-step"><strong>Policy</strong><span>角色和数据域权限通过</span></div>
+                        <div class="pipeline-step warn"><strong>SQL Gateway</strong><span>检测 SELECT * 和扫描量风险</span></div>
+                        <div class="pipeline-step"><strong>DLP</strong><span>手机号字段动态脱敏</span></div>
+                        <div class="pipeline-step warn"><strong>Plan Mode</strong><span>需要安全审批</span></div>
+                        <div class="pipeline-step"><strong>Audit</strong><span>写入 audit_evt_9821</span></div>
+                      </div>
+                    </div>
+                    <div class="a-panel">
+                      <div class="panel-title"><h4>今日待办</h4><span>按风险排序</span></div>
+                      <div class="mini-table">
+                        <div class="mini-row header"><span>对象</span><span>范围</span><span>状态</span><span>风险</span></div>
+                        <div class="mini-row"><span>RMA 高风险查询</span><span>Runtime</span><span>待审批</span><span>High</span></div>
+                        <div class="mini-row"><span>客诉率口径冲突</span><span>Eval</span><span>阻断</span><span>Medium</span></div>
+                        <div class="mini-row"><span>PII 导出尝试</span><span>Audit</span><span>已拒绝</span><span>High</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                <aside class="a-side">
+                  <div class="a-card">
+                    <h4>下一步推荐</h4>
+                    <div class="trace-line">
+                      <div>审批 RMA 高风险 SQL 计划</div>
+                      <div>将 Bad Case 转为回归 Case</div>
+                      <div>发布前重新运行 Eval Run</div>
+                    </div>
+                  </div>
+                  <div class="a-card">
+                    <h4>Trace 摘要</h4>
+                    <div class="trace-line">
+                      <div>intent.rma_complaint_rate</div>
+                      <div>semantic.metric.complaint_rate</div>
+                      <div>runtime.audit.audit_evt_9821</div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </div>
+          <div class="option-note">
+            建议：如果你想让当前产品“立刻显得更高级”，选 A。它不会牺牲可用性，且和现有 React 结构最兼容。
+          </div>
+        </article>
+
+        <article class="style-card option-b">
+          <div class="style-meta">
+            <div>
+              <div class="eyebrow">Option B · Mission Control</div>
+              <h2>高密度运行控制台：更硬核、更像 Agent Runtime 指挥中心</h2>
+              <p>
+                以深藏蓝为主视觉，强调实时风险、SQL 审查、审计流和工具调用 Replay。
+                适合把 Runtime Workbench 做成产品记忆点，科技感最强。
+              </p>
+            </div>
+            <div>
+              <dl>
+                <dt>关键词</dt><dd>实时、硬核、高密度、控制感</dd>
+                <dt>适用</dt><dd>Runtime 工作台、安全团队、发布演示</dd>
+                <dt>风险</dt><dd>长期办公会略重，需要亮色配置页配合</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="app-frame">
+            <aside class="b-rail">
+              <div class="b-mark">DA</div>
+              <div class="b-icons">
+                <span class="active">RT</span><span>QA</span><span>EV</span><span>AU</span><span>RL</span>
+              </div>
+              <div></div>
+            </aside>
+            <section class="b-main">
+              <header class="b-command">
+                <div>
+                  <h3>Runtime 使用工作台</h3>
+                  <p>安全链路模拟器 · SQL Gateway · DLP / Masking · Plan Mode · Audit</p>
+                </div>
+                <div class="b-actions">
+                  <button>生产环境</button>
+                  <button>安全合规</button>
+                  <button class="run">运行模拟</button>
+                </div>
+              </header>
+              <div class="b-content">
+                <div class="b-kpis">
+                  <div class="kpi"><span>Policy 决策</span><strong>ASK</strong><span>需审批</span></div>
+                  <div class="kpi"><span>最大扫描量</span><strong>800MB</strong><span>超过阈值</span></div>
+                  <div class="kpi"><span>DLP 命中</span><strong>PII</strong><span>phone / email</span></div>
+                  <div class="kpi"><span>审计事件</span><strong>9821</strong><span>已落盘</span></div>
+                </div>
+                <div class="b-grid">
+                  <div class="b-panel">
+                    <h4>SQL Review</h4>
+                    <div class="b-sql mono">
+                      SELECT * FROM ads_rma_customer_detail<br />
+                      WHERE dt BETWEEN '2026-06-01' AND '2026-06-30'<br />
+                      AND complaint_type = 'Quality issue';<br /><br />
+                      -- risk: SELECT_STAR + PII_EXPORT + LARGE_SCAN
+                    </div>
+                    <div class="b-pipeline">
+                      <div class="b-step"><strong>Policy Engine</strong><span>ABAC 命中 RMA 域权限</span><em>PASS</em></div>
+                      <div class="b-step"><strong>SQL Gateway</strong><span>禁止 SELECT *，限制行数 5000</span><em>ASK</em></div>
+                      <div class="b-step"><strong>DLP / Masking</strong><span>手机号、邮箱字段必须脱敏</span><em>MASK</em></div>
+                      <div class="b-step"><strong>Plan Mode</strong><span>高风险查询需要审批后执行</span><em>WAIT</em></div>
+                      <div class="b-step"><strong>Audit</strong><span>记录用户、Agent、SQL 摘要、裁决</span><em>DONE</em></div>
+                    </div>
+                  </div>
+                  <div class="b-panel">
+                    <h4>治理作业台</h4>
+                    <div class="mini-table">
+                      <div class="mini-row header"><span>节点</span><span>工具</span><span>状态</span><span>引用</span></div>
+                      <div class="mini-row"><span>识别敏感字段</span><span>schema_scan</span><span>Done</span><span>evt_78</span></div>
+                      <div class="mini-row"><span>生成脱敏规则</span><span>policy_gen</span><span>Ask</span><span>plan_12</span></div>
+                      <div class="mini-row"><span>回放工具调用</span><span>replay</span><span>Ready</span><span>evt_91</span></div>
+                    </div>
+                    <div class="option-note" style="background:rgba(255,107,0,.1);border-color:#ff6b00;color:#dbeafe;">
+                      Plan Mode 卡片在这里是核心视觉对象，审批前后对比会比普通表格更有“Runtime 产品”感。
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <aside class="b-side">
+              <div class="b-side-card">
+                <h4>Live Trace</h4>
+                <p class="mono">trace_20260605_1417<br />agent=rma_qa<br />tool=sql.review<br />decision=ASK</p>
+              </div>
+              <div class="b-side-card">
+                <h4>Risk Explain</h4>
+                <p>本次查询包含高扫描量、SELECT *、PII 字段导出风险。Runtime 允许进入审批，但不会把敏感明文放入模型上下文。</p>
+              </div>
+              <div class="b-side-card">
+                <h4>Red Team Samples</h4>
+                <p>DDL / DML · PII Export · SELECT * · Cross Domain · No Limit</p>
+              </div>
+            </aside>
+          </div>
+          <div class="option-note">
+            建议：如果你想突出“Data Governance Agent Runtime 是真正的运行时产品”，选 B，并把浅色配置页作为辅助模块。
+          </div>
+        </article>
+
+        <article class="style-card option-c">
+          <div class="style-meta">
+            <div>
+              <div class="eyebrow">Option C · Analytical Workspace</div>
+              <h2>现代问数工作台：像 ChatBI，但更有过程透明度</h2>
+              <p>
+                把 Data&QA 的“先理解、先对口径、再执行、再回答”做成主界面叙事。
+                布局更接近新一代 AI 数据产品：提问主区、语义理解区、执行计划、答案和 Trace 并列。
+              </p>
+            </div>
+            <div>
+              <dl>
+                <dt>关键词</dt><dd>产品化、清爽、透明、面向业务用户</dd>
+                <dt>适用</dt><dd>问数工作台、管理者视角、ChatBI Demo</dd>
+                <dt>风险</dt><dd>Runtime 的硬核治理感弱，需要和 B 或 A 搭配</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="app-frame">
+            <header class="c-top">
+              <div class="c-brand"><span>DA</span><strong>Data Agent Console</strong></div>
+              <nav class="c-nav">
+                <button>首页看板</button>
+                <button>Runtime 工作台</button>
+                <button class="active">问数工作台</button>
+                <button>Case / Eval</button>
+                <button>Trace / Audit</button>
+              </nav>
+              <div class="c-context"><span>生产</span><span>管理者</span><span>设置</span></div>
+            </header>
+            <section class="c-main">
+              <div class="c-workspace">
+                <div class="c-question">
+                  <div>
+                    <div class="eyebrow">RMA 问数助手</div>
+                    <h3>本月 RMA 客诉率是多少？</h3>
+                    <p>系统会先对齐指标、时间、维度和权限，再通过 Runtime 安全执行。</p>
+                  </div>
+                  <div class="c-actions">
+                    <button class="primary-action">运行分析</button>
+                    <button class="ghost-action" style="color:#fff;border-color:rgba(255,255,255,.22)">转 Case</button>
+                  </div>
+                </div>
+                <div class="c-understand">
+                  <div><span>任务类型</span><strong>L1 查询取数</strong></div>
+                  <div><span>指标</span><strong>RMA 客诉率</strong></div>
+                  <div><span>时间</span><strong>本月</strong></div>
+                  <div><span>维度</span><strong>产品线 / 区域</strong></div>
+                  <div><span>权限</span><strong>Runtime PASS</strong></div>
+                </div>
+                <div class="c-answer-area">
+                  <div class="c-plan">
+                    <h4>执行计划</h4>
+                    <ol>
+                      <li><span>1</span><div><strong>理解问题</strong><small>识别指标、口径、时间范围和受众</small></div></li>
+                      <li><span>2</span><div><strong>语义映射</strong><small>绑定 semantic_metric.complaint_rate</small></div></li>
+                      <li><span>3</span><div><strong>Runtime 审查</strong><small>Policy、SQL Gateway、DLP 全链路通过</small></div></li>
+                      <li><span>4</span><div><strong>合成答案</strong><small>按管理者摘要模板输出结论和建议</small></div></li>
+                    </ol>
+                  </div>
+                  <div class="c-answer">
+                    <h4>最终回答</h4>
+                    <div class="answer-value"><strong>2.37%</strong><span>较上月 +0.42pp</span></div>
+                    <p>
+                      本月 RMA 客诉率为 2.37%。升高主要来自质量问题客诉，集中在升降桌核心配件。
+                      建议优先排查最近两周入库批次，并将异常 SKU 加入每日质量监控。
+                    </p>
+                    <div class="mini-table">
+                      <div class="mini-row header"><span>证据</span><span>数值</span><span>口径</span><span>审计</span></div>
+                      <div class="mini-row"><span>RMA 客诉数</span><span>124</span><span>已去重</span><span>evt_902</span></div>
+                      <div class="mini-row"><span>订单数</span><span>5,231</span><span>本月有效订单</span><span>evt_903</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <aside class="c-trace">
+                <h4>Trace 时间线</h4>
+                <div class="c-timeline">
+                  <div><strong>Intent</strong><span>rma_complaint_rate_query · score 0.94</span></div>
+                  <div><strong>Clarification</strong><span>complete · 无需追问</span></div>
+                  <div><strong>Semantic</strong><span>metric=complaint_rate · datasource=starrocks_rma</span></div>
+                  <div><strong>Runtime</strong><span>policy=pass · dlp=no_pii · audit=evt_902</span></div>
+                  <div><strong>Answer</strong><span>manager_template · confidence 0.88</span></div>
+                </div>
+                <div class="feedback-bar">
+                  <input value="答案可信，建议补充 SKU 明细" aria-label="feedback" readonly />
+                  <button>满意</button>
+                  <button>转 Bad Case</button>
+                </div>
+              </aside>
+            </section>
+          </div>
+          <div class="option-note">
+            建议：如果你想让业务方觉得“这就是能用的 ChatBI 产品”，选 C；但 Runtime 工作台最好同步采用 A 或 B 的治理视觉。
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

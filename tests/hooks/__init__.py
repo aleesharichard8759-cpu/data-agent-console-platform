@@ -1,0 +1,2 @@
+"""Hook tests package."""
+

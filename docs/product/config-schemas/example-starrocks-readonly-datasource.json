@@ -1,0 +1,159 @@
+{
+  "tenants": [
+    {
+      "id": "tenant_loctek",
+      "tenant_id": "tenant_loctek",
+      "name": "loctek",
+      "display_name": "Loctek Data Platform",
+      "description": "Data Agent Console tenant for governed data access.",
+      "status": "active",
+      "version": "2026.06.03",
+      "owner_ids": [
+        "user_platform_admin"
+      ],
+      "tags": [
+        "data-agent-console"
+      ],
+      "created_at": "2026-06-03T00:00:00+08:00",
+      "updated_at": "2026-06-03T00:00:00+08:00",
+      "default_environment_id": "env_prod",
+      "admin_role_ids": [
+        "platform_admin"
+      ],
+      "data_residency": "待确认",
+      "security_baseline": "default_deny"
+    }
+  ],
+  "environments": [
+    {
+      "id": "env_prod",
+      "tenant_id": "tenant_loctek",
+      "name": "prod",
+      "description": "Production environment. Real connectors require release gate and approval.",
+      "status": "active",
+      "version": "2026.06.03",
+      "owner_ids": [
+        "user_platform_admin"
+      ],
+      "tags": [
+        "prod"
+      ],
+      "created_at": "2026-06-03T00:00:00+08:00",
+      "updated_at": "2026-06-03T00:00:00+08:00",
+      "env_type": "prod",
+      "allow_real_connector": true,
+      "requires_release_gate": true,
+      "requires_approval": true,
+      "data_scope": "production",
+      "region": "待确认"
+    }
+  ],
+  "connectors": [
+    {
+      "id": "conn_starrocks_rma_prod",
+      "tenant_id": "tenant_loctek",
+      "environment_id": "env_prod",
+      "name": "StarRocks RMA Production Readonly Connector",
+      "description": "Readonly warehouse connector for RMA aggregated analytics. Credentials are stored only as secret_ref.",
+      "status": "active",
+      "version": "2026.06.03",
+      "owner_ids": [
+        "user_data_platform_admin"
+      ],
+      "tags": [
+        "starrocks",
+        "rma",
+        "readonly"
+      ],
+      "created_at": "2026-06-03T00:00:00+08:00",
+      "updated_at": "2026-06-03T00:00:00+08:00",
+      "connector_kind": "warehouse",
+      "provider": "starrocks",
+      "endpoint": "starrocks-fe.prod.internal:9030",
+      "auth_type": "basic",
+      "secret_ref": "secret://data-agent/prod/starrocks/rma_readonly",
+      "timeout_seconds": 5,
+      "enabled": true,
+      "is_mock": false,
+      "health_status": "unknown",
+      "last_checked_at": "2026-06-03T00:00:00+08:00"
+    }
+  ],
+  "data_sources": [
+    {
+      "id": "ds_starrocks_rma_ads_prod",
+      "tenant_id": "tenant_loctek",
+      "environment_id": "env_prod",
+      "connector_id": "conn_starrocks_rma_prod",
+      "name": "RMA ADS Readonly Dataset",
+      "description": "Readonly StarRocks data source for RMA ADS/DWS aggregate tables. Raw ODS access is blocked.",
+      "status": "active",
+      "version": "2026.06.03",
+      "owner_ids": [
+        "user_rma_data_owner"
+      ],
+      "tags": [
+        "rma",
+        "ads",
+        "dws",
+        "readonly"
+      ],
+      "created_at": "2026-06-03T00:00:00+08:00",
+      "updated_at": "2026-06-03T00:00:00+08:00",
+      "source_type": "warehouse",
+      "engine": "starrocks",
+      "catalog": "default_catalog",
+      "database": "flexispot",
+      "schema": "flexispot",
+      "access_mode": "read_only",
+      "allowed_asset_patterns": [
+        "flexispot.ads_afs_rma_*",
+        "flexispot.dws_afs_rma_*",
+        "flexispot.dws_trd_sale_*"
+      ],
+      "blocked_asset_patterns": [
+        "flexispot.ods_*",
+        "flexispot.*customer*",
+        "flexispot.*address*"
+      ],
+      "default_sensitivity_level": "L2",
+      "secret_ref": "secret://data-agent/prod/starrocks/rma_readonly"
+    }
+  ],
+  "data_tools": [
+    {
+      "id": "tool_query_rma_metric_sql",
+      "tenant_id": "tenant_loctek",
+      "name": "Query RMA Metric SQL",
+      "description": "Executes governed readonly metric SQL against RMA aggregate data after Policy and SQL Gateway review.",
+      "status": "active",
+      "version": "2026.06.03",
+      "owner_ids": [
+        "user_data_platform_admin"
+      ],
+      "tags": [
+        "sql",
+        "rma",
+        "metric"
+      ],
+      "created_at": "2026-06-03T00:00:00+08:00",
+      "updated_at": "2026-06-03T00:00:00+08:00",
+      "tool_name": "query_rma_metric_sql",
+      "tool_type": "sql_query",
+      "connector_ids": [
+        "conn_starrocks_rma_prod"
+      ],
+      "data_source_ids": [
+        "ds_starrocks_rma_ads_prod"
+      ],
+      "input_schema_ref": "schema://runtime/tool-inputs/query-sql-v1",
+      "output_schema_ref": "schema://runtime/tool-outputs/query-sql-summary-v1",
+      "is_read_only": true,
+      "is_destructive": false,
+      "requires_approval": false,
+      "allow_in_model_context": false,
+      "max_rows": 1000,
+      "max_bytes": 1048576
+    }
+  ]
+}

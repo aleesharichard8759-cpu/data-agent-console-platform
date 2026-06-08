@@ -1,0 +1,1218 @@
+openapi: 3.1.0
+info:
+  title: Data Agent Console API
+  version: 0.1.0
+  description: >
+    REST API contract for configuring, operating, approving, evaluating and auditing
+    Data Governance Agent Runtime and Data&QA Agent Product. This contract is
+    configuration-first and mock-backend-ready. Data&QA Product APIs never expose
+    database credentials or direct database execution.
+servers:
+  - url: /api/v1
+    description: Console API base path
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Runtime Resources
+  - name: Runtime Approvals
+  - name: Runtime Audit
+  - name: Product Resources
+  - name: Product Approvals
+  - name: Eval Runs
+  - name: Feedback
+
+x-covered-runtime-resources:
+  - tenants
+  - environments
+  - connectors
+  - data-sources
+  - data-tools
+  - tool-policies
+  - sql-gateway-policies
+  - dlp-policies
+  - masking-rules
+  - approval-policies
+  - audit-events
+  - runtime-releases
+x-covered-product-resources:
+  - agent-apps
+  - agent-profiles
+  - semantic-metrics
+  - semantic-dimensions
+  - business-entities
+  - clarification-templates
+  - analysis-workflows
+  - answer-templates
+  - case-items
+  - eval-runs
+  - feedback-items
+  - product-releases
+
+paths:
+  /runtime/{resource}:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeResource"
+      - $ref: "#/components/parameters/TenantIdQuery"
+      - $ref: "#/components/parameters/EnvironmentIdQuery"
+      - $ref: "#/components/parameters/StatusQuery"
+      - $ref: "#/components/parameters/ApprovalStatusQuery"
+      - $ref: "#/components/parameters/PageQuery"
+      - $ref: "#/components/parameters/PageSizeQuery"
+    get:
+      tags: [Runtime Resources]
+      summary: List Runtime configuration resources
+      operationId: listRuntimeResources
+      responses:
+        "200":
+          description: Runtime resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeResourceListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    post:
+      tags: [Runtime Resources]
+      summary: Create a Runtime configuration draft
+      operationId: createRuntimeResource
+      description: >
+        Creates a draft resource. Writes to connectors, data-sources, tools,
+        policies, rules and releases must include version, created_by, updated_by
+        and approval_status. Secret values are forbidden; use secret_ref only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuntimeResourceCreateRequest"
+      responses:
+        "201":
+          description: Created draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/{resource}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeResource"
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Runtime Resources]
+      summary: Get Runtime configuration resource
+      operationId: getRuntimeResource
+      responses:
+        "200":
+          description: Runtime resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    patch:
+      tags: [Runtime Resources]
+      summary: Update Runtime configuration draft
+      operationId: updateRuntimeResource
+      description: >
+        Updates a draft or creates a new draft from a published version depending
+        on implementation policy. version, updated_by and approval_status are required.
+      parameters:
+        - $ref: "#/components/parameters/IfMatchVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuntimeResourceUpdateRequest"
+      responses:
+        "200":
+          description: Updated resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    delete:
+      tags: [Runtime Resources]
+      summary: Archive Runtime configuration resource
+      operationId: archiveRuntimeResource
+      description: >
+        Archives the resource. For high-risk production resources this creates
+        an approval-required change rather than deleting data immediately.
+      responses:
+        "202":
+          description: Archive accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/{resource}/{id}/submit-for-approval:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Runtime Approvals]
+      summary: Submit Runtime configuration for approval
+      operationId: submitRuntimeResourceForApproval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitForApprovalRequest"
+      responses:
+        "202":
+          description: Approval requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/{resource}/{id}/approve:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Runtime Approvals]
+      summary: Approve Runtime configuration change
+      operationId: approveRuntimeResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionRequest"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/{resource}/{id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Runtime Approvals]
+      summary: Reject Runtime configuration change
+      operationId: rejectRuntimeResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionRequest"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/{resource}/{id}/rollback:
+    parameters:
+      - $ref: "#/components/parameters/RuntimeHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Runtime Approvals]
+      summary: Roll back Runtime configuration to a previous version
+      operationId: rollbackRuntimeResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollbackRequest"
+      responses:
+        "202":
+          description: Rollback request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/audit-events:
+    get:
+      tags: [Runtime Audit]
+      summary: List audit events
+      operationId: listAuditEvents
+      parameters:
+        - $ref: "#/components/parameters/TenantIdQuery"
+        - $ref: "#/components/parameters/EnvironmentIdQuery"
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+        - name: decision
+          in: query
+          schema:
+            $ref: "#/components/schemas/Decision"
+        - name: trace_id
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /runtime/audit-events/{id}:
+    get:
+      tags: [Runtime Audit]
+      summary: Get audit event detail
+      operationId: getAuditEvent
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Audit event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}:
+    parameters:
+      - $ref: "#/components/parameters/ProductResource"
+      - $ref: "#/components/parameters/TenantIdQuery"
+      - $ref: "#/components/parameters/EnvironmentIdQuery"
+      - $ref: "#/components/parameters/StatusQuery"
+      - $ref: "#/components/parameters/ApprovalStatusQuery"
+      - $ref: "#/components/parameters/PageQuery"
+      - $ref: "#/components/parameters/PageSizeQuery"
+    get:
+      tags: [Product Resources]
+      summary: List Data&QA Product configuration resources
+      operationId: listProductResources
+      responses:
+        "200":
+          description: Product resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResourceListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    post:
+      tags: [Product Resources]
+      summary: Create a Data&QA Product configuration draft
+      operationId: createProductResource
+      description: >
+        Creates a Data&QA product-side draft. Product resources may reference
+        Runtime environments, data-sources, data-tools and policies by id, but
+        must not carry database connection strings, passwords, tokens or raw secrets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductResourceCreateRequest"
+      responses:
+        "201":
+          description: Created draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ProductResource"
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Product Resources]
+      summary: Get Data&QA Product configuration resource
+      operationId: getProductResource
+      responses:
+        "200":
+          description: Product resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    patch:
+      tags: [Product Resources]
+      summary: Update Data&QA Product configuration draft
+      operationId: updateProductResource
+      parameters:
+        - $ref: "#/components/parameters/IfMatchVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductResourceUpdateRequest"
+      responses:
+        "200":
+          description: Updated resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    delete:
+      tags: [Product Resources]
+      summary: Archive Data&QA Product configuration resource
+      operationId: archiveProductResource
+      responses:
+        "202":
+          description: Archive accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}/{id}/submit-for-approval:
+    parameters:
+      - $ref: "#/components/parameters/ProductHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Product Approvals]
+      summary: Submit Data&QA Product configuration for approval
+      operationId: submitProductResourceForApproval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitForApprovalRequest"
+      responses:
+        "202":
+          description: Approval requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}/{id}/approve:
+    parameters:
+      - $ref: "#/components/parameters/ProductHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Product Approvals]
+      summary: Approve Data&QA Product configuration change
+      operationId: approveProductResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionRequest"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}/{id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/ProductHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Product Approvals]
+      summary: Reject Data&QA Product configuration change
+      operationId: rejectProductResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionRequest"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/{resource}/{id}/rollback:
+    parameters:
+      - $ref: "#/components/parameters/ProductHighRiskResource"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Product Approvals]
+      summary: Roll back Data&QA Product configuration to a previous version
+      operationId: rollbackProductResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollbackRequest"
+      responses:
+        "202":
+          description: Rollback request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/eval-runs/{id}/start:
+    post:
+      tags: [Eval Runs]
+      summary: Start an Eval Run
+      operationId: startEvalRun
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartEvalRunRequest"
+      responses:
+        "202":
+          description: Eval run started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvalRunActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/eval-runs/{id}/cancel:
+    post:
+      tags: [Eval Runs]
+      summary: Cancel an Eval Run
+      operationId: cancelEvalRun
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActorReasonRequest"
+      responses:
+        "202":
+          description: Eval run cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvalRunActionResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+  /product/feedback-items/{id}/triage:
+    post:
+      tags: [Feedback]
+      summary: Triage a feedback item and optionally convert it to a case item
+      operationId: triageFeedbackItem
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackTriageRequest"
+      responses:
+        "200":
+          description: Feedback triaged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResourceResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    RuntimeResource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/RuntimeResourceName"
+    RuntimeHighRiskResource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/RuntimeHighRiskResourceName"
+    ProductResource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ProductResourceName"
+    ProductHighRiskResource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ProductHighRiskResourceName"
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    TenantIdQuery:
+      name: tenant_id
+      in: query
+      schema:
+        type: string
+    EnvironmentIdQuery:
+      name: environment_id
+      in: query
+      schema:
+        type: string
+    StatusQuery:
+      name: status
+      in: query
+      schema:
+        $ref: "#/components/schemas/ResourceStatus"
+    ApprovalStatusQuery:
+      name: approval_status
+      in: query
+      schema:
+        $ref: "#/components/schemas/ApprovalStatus"
+    PageQuery:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeQuery:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    IfMatchVersion:
+      name: If-Match-Version
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Optimistic lock version expected by the client.
+
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    RuntimeResourceName:
+      type: string
+      enum:
+        - tenants
+        - environments
+        - connectors
+        - data-sources
+        - data-tools
+        - tool-policies
+        - sql-gateway-policies
+        - dlp-policies
+        - masking-rules
+        - approval-policies
+        - runtime-releases
+
+    RuntimeHighRiskResourceName:
+      type: string
+      enum:
+        - environments
+        - connectors
+        - data-sources
+        - data-tools
+        - tool-policies
+        - sql-gateway-policies
+        - dlp-policies
+        - masking-rules
+        - approval-policies
+        - runtime-releases
+
+    ProductResourceName:
+      type: string
+      enum:
+        - agent-apps
+        - agent-profiles
+        - semantic-metrics
+        - semantic-dimensions
+        - business-entities
+        - clarification-templates
+        - analysis-workflows
+        - answer-templates
+        - case-items
+        - eval-runs
+        - feedback-items
+        - product-releases
+
+    ProductHighRiskResourceName:
+      type: string
+      enum:
+        - agent-apps
+        - agent-profiles
+        - semantic-metrics
+        - semantic-dimensions
+        - business-entities
+        - clarification-templates
+        - analysis-workflows
+        - answer-templates
+        - case-items
+        - product-releases
+
+    ResourceStatus:
+      type: string
+      enum: [draft, active, disabled, archived, published, deprecated, running, passed, failed, blocked]
+
+    ApprovalStatus:
+      type: string
+      enum: [not_required, draft, pending_approval, approved, rejected, expired, canceled, rollback_requested, rolled_back]
+
+    Decision:
+      type: string
+      enum: [ALLOW, ASK, DENY]
+
+    RiskLevel:
+      type: string
+      enum: [G1, G2, G3, G4, G5]
+
+    TraceEnvelope:
+      type: object
+      required: [trace_id, audit_refs]
+      properties:
+        trace_id:
+          type: string
+        audit_refs:
+          type: array
+          items:
+            type: string
+
+    Pagination:
+      type: object
+      required: [page, page_size, total]
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+
+    VersionedConfigBase:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - name
+        - status
+        - version
+        - created_by
+        - updated_by
+        - approval_status
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        environment_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/ResourceStatus"
+        version:
+          type: string
+          description: Client-visible config version. Required for all writes.
+        created_by:
+          type: string
+          description: User or service principal that created this draft.
+        updated_by:
+          type: string
+          description: User or service principal that last updated this draft.
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        risk_level:
+          $ref: "#/components/schemas/RiskLevel"
+        owner_ids:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      additionalProperties: true
+
+    RuntimeResource:
+      allOf:
+        - $ref: "#/components/schemas/VersionedConfigBase"
+        - type: object
+          required: [resource_type]
+          properties:
+            resource_type:
+              $ref: "#/components/schemas/RuntimeResourceName"
+            environment_ids:
+              type: array
+              items:
+                type: string
+            secret_ref:
+              type: string
+              description: >
+                Secret manager reference only. Plaintext password, token, access
+                key secret, private key or connection secret fields are forbidden.
+            policy_decision:
+              $ref: "#/components/schemas/Decision"
+
+    ProductResource:
+      allOf:
+        - $ref: "#/components/schemas/VersionedConfigBase"
+        - type: object
+          required: [resource_type]
+          properties:
+            resource_type:
+              $ref: "#/components/schemas/ProductResourceName"
+            runtime_environment_id:
+              type: string
+            runtime_release_id:
+              type: string
+            runtime_data_source_ids:
+              type: array
+              items:
+                type: string
+            runtime_data_tool_ids:
+              type: array
+              items:
+                type: string
+            runtime_policy_ids:
+              type: array
+              items:
+                type: string
+            business_domain_ids:
+              type: array
+              items:
+                type: string
+
+    RuntimeResourceCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/RuntimeResource"
+      unevaluatedProperties: true
+
+    RuntimeResourceUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/RuntimeResource"
+      unevaluatedProperties: true
+
+    ProductResourceCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ProductResource"
+      unevaluatedProperties: true
+
+    ProductResourceUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ProductResource"
+      unevaluatedProperties: true
+
+    RuntimeResourceResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              $ref: "#/components/schemas/RuntimeResource"
+
+    RuntimeResourceListResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data, pagination]
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/RuntimeResource"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    ProductResourceResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              $ref: "#/components/schemas/ProductResource"
+
+    ProductResourceListResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data, pagination]
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProductResource"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    AuditEvent:
+      type: object
+      required: [id, tenant_id, occurred_at, event_type, actor_id, resource_type, resource_id, decision, summary]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        environment_id:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum:
+            - config.create
+            - config.update
+            - approval.submit
+            - approval.approve
+            - approval.reject
+            - rollback.request
+            - rollback.complete
+            - tool.call
+            - sql.review
+            - dlp.mask
+            - eval.run
+            - feedback.create
+        actor_id:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        trace_id:
+          type: string
+        decision:
+          $ref: "#/components/schemas/Decision"
+        summary:
+          type: string
+          description: Safe summary only. Raw payload and raw result are forbidden.
+        request_hash:
+          type: string
+        result_hash:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    AuditEventResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              $ref: "#/components/schemas/AuditEvent"
+
+    AuditEventListResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [data, pagination]
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/AuditEvent"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    SubmitForApprovalRequest:
+      type: object
+      required: [submitted_by, version, created_by, updated_by, approval_status, reason, risk_level]
+      properties:
+        submitted_by:
+          type: string
+        version:
+          type: string
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        reason:
+          type: string
+        risk_level:
+          $ref: "#/components/schemas/RiskLevel"
+        change_summary:
+          type: string
+        rollback_plan:
+          type: string
+        approver_group_id:
+          type: string
+        evidence_refs:
+          type: array
+          items:
+            type: string
+
+    ApprovalDecisionRequest:
+      type: object
+      required: [approver_id, version, created_by, updated_by, approval_status, reason]
+      properties:
+        approver_id:
+          type: string
+        version:
+          type: string
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        reason:
+          type: string
+        conditions:
+          type: array
+          items:
+            type: string
+
+    RollbackRequest:
+      type: object
+      required: [requested_by, version, created_by, updated_by, approval_status, current_version, target_version, reason]
+      properties:
+        requested_by:
+          type: string
+        version:
+          type: string
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        current_version:
+          type: string
+        target_version:
+          type: string
+        reason:
+          type: string
+        require_approval:
+          type: boolean
+          default: true
+        evidence_refs:
+          type: array
+          items:
+            type: string
+
+    ActorReasonRequest:
+      type: object
+      required: [actor_id, version, created_by, updated_by, approval_status, reason]
+      properties:
+        actor_id:
+          type: string
+        version:
+          type: string
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        reason:
+          type: string
+
+    StartEvalRunRequest:
+      type: object
+      required: [started_by, version, created_by, updated_by, approval_status, agent_version, runtime_release_id, case_suite_id]
+      properties:
+        started_by:
+          type: string
+        version:
+          type: string
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        agent_version:
+          type: string
+        runtime_release_id:
+          type: string
+        case_suite_id:
+          type: string
+        langfuse_project:
+          type: string
+        dry_run:
+          type: boolean
+          default: true
+
+    FeedbackTriageRequest:
+      type: object
+      required: [version, created_by, updated_by, approval_status, triage_status]
+      properties:
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        version:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        triage_status:
+          type: string
+          enum: [new, investigating, converted_to_case, fixed, ignored]
+        issue_type:
+          type: string
+        owner_id:
+          type: string
+        convert_to_case:
+          type: boolean
+          default: false
+        case_type:
+          type: string
+          enum: [golden, clarification, negative, red_team, bad_case, regression]
+        notes:
+          type: string
+
+    ActionResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [status, message]
+          properties:
+            status:
+              type: string
+            message:
+              type: string
+
+    ApprovalActionResponse:
+      allOf:
+        - $ref: "#/components/schemas/ActionResponse"
+        - type: object
+          required: [approval_status]
+          properties:
+            approval_status:
+              $ref: "#/components/schemas/ApprovalStatus"
+            approval_id:
+              type: string
+            resource_id:
+              type: string
+            version:
+              type: string
+
+    EvalRunActionResponse:
+      allOf:
+        - $ref: "#/components/schemas/ActionResponse"
+        - type: object
+          required: [eval_run_id, run_status]
+          properties:
+            eval_run_id:
+              type: string
+            run_status:
+              type: string
+              enum: [queued, running, passed, failed, blocked, cancelled]
+
+    ErrorResponse:
+      allOf:
+        - $ref: "#/components/schemas/TraceEnvelope"
+        - type: object
+          required: [error]
+          properties:
+            error:
+              type: object
+              required: [code, message]
+              properties:
+                code:
+                  $ref: "#/components/schemas/ErrorCode"
+                message:
+                  type: string
+                details:
+                  type: object
+                  additionalProperties: true
+
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - AUTHENTICATION_REQUIRED
+        - PERMISSION_DENIED
+        - RESOURCE_NOT_FOUND
+        - VERSION_CONFLICT
+        - APPROVAL_REQUIRED
+        - APPROVAL_STATE_INVALID
+        - RELEASE_GATE_FAILED
+        - ROLLBACK_NOT_AVAILABLE
+        - SECRET_PLAINTEXT_FORBIDDEN
+        - RUNTIME_BOUNDARY_VIOLATION
+        - POLICY_DENIED
+        - RATE_LIMITED
+        - INTERNAL_ERROR

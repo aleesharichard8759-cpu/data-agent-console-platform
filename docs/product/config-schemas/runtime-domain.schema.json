@@ -1,0 +1,940 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/data-agent-console/runtime-domain.schema.json",
+  "title": "Data Agent Console Runtime Domain Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tenants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Tenant"
+      }
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Environment"
+      }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Connector"
+      }
+    },
+    "data_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DataSource"
+      }
+    },
+    "data_tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DataTool"
+      }
+    },
+    "tool_policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ToolPolicy"
+      }
+    },
+    "sql_gateway_policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SQLGatewayPolicy"
+      }
+    },
+    "dlp_policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DLPPolicy"
+      }
+    },
+    "masking_rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MaskingRule"
+      }
+    },
+    "approval_policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ApprovalPolicy"
+      }
+    },
+    "audit_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AuditEvent"
+      }
+    },
+    "runtime_releases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RuntimeRelease"
+      }
+    }
+  },
+  "$defs": {
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ConfigStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "disabled",
+        "archived"
+      ]
+    },
+    "Decision": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "ASK",
+        "DENY"
+      ]
+    },
+    "SensitivityLevel": {
+      "type": "string",
+      "enum": [
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ]
+    },
+    "RiskLevel": {
+      "type": "string",
+      "enum": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5"
+      ]
+    },
+    "StringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "BaseConfig": {
+      "type": "object",
+      "required": [
+        "id",
+        "tenant_id",
+        "name",
+        "status",
+        "version",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ConfigStatus"
+        },
+        "version": {
+          "type": "string"
+        },
+        "owner_ids": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "tags": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "created_at": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/DateTime"
+        }
+      }
+    },
+    "Tenant": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "display_name",
+            "security_baseline"
+          ],
+          "properties": {
+            "display_name": {
+              "type": "string"
+            },
+            "default_environment_id": {
+              "type": "string"
+            },
+            "admin_role_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_residency": {
+              "type": "string",
+              "enum": [
+                "cn",
+                "us",
+                "eu",
+                "global",
+                "待确认"
+              ]
+            },
+            "security_baseline": {
+              "type": "string",
+              "enum": [
+                "default_deny",
+                "custom"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "Environment": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "env_type",
+            "allow_real_connector",
+            "requires_release_gate",
+            "requires_approval",
+            "data_scope"
+          ],
+          "properties": {
+            "env_type": {
+              "type": "string",
+              "enum": [
+                "dev",
+                "test",
+                "staging",
+                "prod"
+              ]
+            },
+            "allow_real_connector": {
+              "type": "boolean"
+            },
+            "requires_release_gate": {
+              "type": "boolean"
+            },
+            "requires_approval": {
+              "type": "boolean"
+            },
+            "data_scope": {
+              "type": "string",
+              "enum": [
+                "mock",
+                "sample",
+                "masked",
+                "production"
+              ]
+            },
+            "region": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Connector": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_id",
+            "connector_kind",
+            "provider",
+            "auth_type",
+            "timeout_seconds",
+            "enabled",
+            "is_mock",
+            "health_status"
+          ],
+          "properties": {
+            "environment_id": {
+              "type": "string"
+            },
+            "connector_kind": {
+              "type": "string",
+              "enum": [
+                "metadata",
+                "warehouse",
+                "quality",
+                "metric",
+                "lineage",
+                "permission",
+                "masking",
+                "workflow",
+                "scheduler",
+                "observability"
+              ]
+            },
+            "provider": {
+              "type": "string",
+              "enum": [
+                "openmetadata",
+                "starrocks",
+                "doris",
+                "hive",
+                "langfuse",
+                "jira",
+                "lark",
+                "custom",
+                "待确认"
+              ]
+            },
+            "endpoint": {
+              "type": "string"
+            },
+            "auth_type": {
+              "type": "string",
+              "enum": [
+                "none",
+                "basic",
+                "token",
+                "ak_sk",
+                "oauth2",
+                "iam_role",
+                "待确认"
+              ]
+            },
+            "secret_ref": {
+              "type": "string",
+              "description": "Credential reference only. Plaintext secrets are forbidden."
+            },
+            "timeout_seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "is_mock": {
+              "type": "boolean"
+            },
+            "health_status": {
+              "type": "string",
+              "enum": [
+                "unknown",
+                "healthy",
+                "degraded",
+                "failed"
+              ]
+            },
+            "last_checked_at": {
+              "$ref": "#/$defs/DateTime"
+            }
+          }
+        }
+      ]
+    },
+    "DataSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_id",
+            "connector_id",
+            "source_type",
+            "engine",
+            "access_mode",
+            "default_sensitivity_level"
+          ],
+          "properties": {
+            "environment_id": {
+              "type": "string"
+            },
+            "connector_id": {
+              "type": "string"
+            },
+            "source_type": {
+              "type": "string",
+              "enum": [
+                "warehouse",
+                "metadata_catalog",
+                "metric_store",
+                "knowledge_base",
+                "quality_platform"
+              ]
+            },
+            "engine": {
+              "type": "string",
+              "enum": [
+                "starrocks",
+                "doris",
+                "hive",
+                "clickhouse",
+                "mysql",
+                "openmetadata",
+                "custom",
+                "待确认"
+              ]
+            },
+            "catalog": {
+              "type": "string"
+            },
+            "database": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "string"
+            },
+            "access_mode": {
+              "type": "string",
+              "enum": [
+                "read_only",
+                "read_write",
+                "admin"
+              ]
+            },
+            "allowed_asset_patterns": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "blocked_asset_patterns": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "default_sensitivity_level": {
+              "$ref": "#/$defs/SensitivityLevel"
+            },
+            "secret_ref": {
+              "type": "string",
+              "description": "Credential reference only. Plaintext secrets are forbidden."
+            }
+          }
+        }
+      ]
+    },
+    "DataTool": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "tool_name",
+            "tool_type",
+            "input_schema_ref",
+            "output_schema_ref",
+            "is_read_only",
+            "is_destructive",
+            "requires_approval",
+            "allow_in_model_context"
+          ],
+          "properties": {
+            "tool_name": {
+              "type": "string"
+            },
+            "tool_type": {
+              "type": "string",
+              "enum": [
+                "metadata_query",
+                "metric_query",
+                "sql_query",
+                "quality_check",
+                "lineage_query",
+                "permission_check",
+                "masking",
+                "workflow",
+                "scheduler"
+              ]
+            },
+            "connector_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "input_schema_ref": {
+              "type": "string"
+            },
+            "output_schema_ref": {
+              "type": "string"
+            },
+            "is_read_only": {
+              "type": "boolean"
+            },
+            "is_destructive": {
+              "type": "boolean"
+            },
+            "requires_approval": {
+              "type": "boolean"
+            },
+            "allow_in_model_context": {
+              "type": "boolean"
+            },
+            "max_rows": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "ToolPolicy": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "effect",
+            "priority",
+            "reason"
+          ],
+          "properties": {
+            "effect": {
+              "$ref": "#/$defs/Decision"
+            },
+            "priority": {
+              "type": "integer"
+            },
+            "match_tool_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "match_roles": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "match_task_types": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "match_data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "match_operations": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "match_sensitivity_levels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SensitivityLevel"
+              }
+            },
+            "approval_policy_id": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "SQLGatewayPolicy": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_ids",
+            "risk_types",
+            "decision",
+            "allow_rewrite",
+            "requires_approval",
+            "reason"
+          ],
+          "properties": {
+            "environment_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "risk_types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "SELECT_STAR",
+                  "NO_LIMIT",
+                  "DDL_DETECTED",
+                  "DML_DETECTED",
+                  "SENSITIVE_COLUMN",
+                  "RAW_LAYER_ACCESS",
+                  "CROSS_DOMAIN_JOIN",
+                  "LARGE_RESULT_RISK",
+                  "UNKNOWN_TABLE",
+                  "UNSAFE_FUNCTION"
+                ]
+              }
+            },
+            "decision": {
+              "$ref": "#/$defs/Decision"
+            },
+            "default_limit": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_limit": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "allow_rewrite": {
+              "type": "boolean"
+            },
+            "requires_approval": {
+              "type": "boolean"
+            },
+            "approval_policy_id": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "DLPPolicy": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_ids",
+            "field_patterns",
+            "sensitivity_level",
+            "action",
+            "allow_in_model_context",
+            "audit_required"
+          ],
+          "properties": {
+            "environment_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "field_patterns": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "sensitivity_level": {
+              "$ref": "#/$defs/SensitivityLevel"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "mask",
+                "block",
+                "approval_required"
+              ]
+            },
+            "masking_rule_id": {
+              "type": "string"
+            },
+            "allow_in_model_context": {
+              "type": "boolean"
+            },
+            "audit_required": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "MaskingRule": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "masking_type",
+            "preserve_format",
+            "applies_to_levels",
+            "allow_reverse"
+          ],
+          "properties": {
+            "masking_type": {
+              "type": "string",
+              "enum": [
+                "full_mask",
+                "partial_mask",
+                "hash",
+                "tokenize",
+                "redact",
+                "bucket"
+              ]
+            },
+            "pattern": {
+              "type": "string"
+            },
+            "replacement": {
+              "type": "string"
+            },
+            "preserve_format": {
+              "type": "boolean"
+            },
+            "applies_to_levels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SensitivityLevel"
+              }
+            },
+            "allow_reverse": {
+              "type": "boolean"
+            },
+            "secret_ref": {
+              "type": "string",
+              "description": "Only for reversible masking key references. Plaintext keys are forbidden."
+            }
+          }
+        }
+      ]
+    },
+    "ApprovalPolicy": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "approval_type",
+            "risk_levels",
+            "required_approver_roles",
+            "min_approvals",
+            "rollback_required",
+            "g5_approval_allowed"
+          ],
+          "properties": {
+            "approval_type": {
+              "type": "string",
+              "enum": [
+                "tool_execution",
+                "sql_query",
+                "policy_change",
+                "connector_enable",
+                "release",
+                "plan_mode"
+              ]
+            },
+            "risk_levels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RiskLevel"
+              }
+            },
+            "required_approver_roles": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "required_approver_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "min_approvals": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sla_hours": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rollback_required": {
+              "type": "boolean"
+            },
+            "allowed_after_approval_tool_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "g5_approval_allowed": {
+              "type": "boolean",
+              "const": false
+            }
+          }
+        }
+      ]
+    },
+    "AuditEvent": {
+      "type": "object",
+      "required": [
+        "id",
+        "tenant_id",
+        "event_type",
+        "occurred_at",
+        "raw_payload_allowed"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "environment_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "session_started",
+            "task_created",
+            "tool_requested",
+            "policy_evaluated",
+            "permission_denied",
+            "approval_required",
+            "sql_reviewed",
+            "tool_executed",
+            "result_masked",
+            "task_completed",
+            "connector_called",
+            "connector_failed",
+            "release_created",
+            "release_published"
+          ]
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "actor_id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "agent_app_id": {
+          "type": "string"
+        },
+        "tool_id": {
+          "type": "string"
+        },
+        "data_source_ids": {
+          "$ref": "#/$defs/StringArray"
+        },
+        "policy_decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "request_hash": {
+          "type": "string"
+        },
+        "result_hash": {
+          "type": "string"
+        },
+        "raw_payload_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RuntimeRelease": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "environment_id",
+            "release_version",
+            "release_status"
+          ],
+          "properties": {
+            "environment_id": {
+              "type": "string"
+            },
+            "release_version": {
+              "type": "string"
+            },
+            "release_status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "pending_eval",
+                "pending_approval",
+                "published",
+                "rolled_back",
+                "rejected"
+              ]
+            },
+            "connector_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_source_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "data_tool_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "tool_policy_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "sql_gateway_policy_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "dlp_policy_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "approval_policy_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "eval_run_ids": {
+              "$ref": "#/$defs/StringArray"
+            },
+            "approval_ticket_id": {
+              "type": "string"
+            },
+            "published_at": {
+              "$ref": "#/$defs/DateTime"
+            },
+            "published_by": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
