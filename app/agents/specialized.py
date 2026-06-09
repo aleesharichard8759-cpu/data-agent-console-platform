@@ -51,7 +51,7 @@ class MetadataAgent(BaseAgent):
 
 class DataQualityAgent(BaseAgent):
     name = "data_quality_agent"
-    description = "Generate data quality rule suggestions and mock check evidence."
+    description = "Generate data quality rule suggestions and check evidence."
     allowed_tools = ("generate_quality_rules", "run_quality_check")
     max_turns = 3
 

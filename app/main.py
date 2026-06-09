@@ -41,11 +41,11 @@ class HealthResponse(TraceableResponse):
 
 
 class CreateSessionRequest(BaseModel):
-    user_id: str = Field(default="demo_user", description="Mock user id.")
-    display_name: str = Field(default="Demo Data Steward", description="Mock display name.")
+    user_id: str = Field(default="runtime_user", description="Runtime user id.")
+    display_name: str = Field(default="Data Steward", description="Runtime display name.")
     roles: tuple[UserRole, ...] = Field(
         default=(UserRole.DATA_STEWARD,),
-        description="Mock user roles.",
+        description="Runtime user roles.",
     )
 
 
@@ -67,7 +67,7 @@ class SQLReviewRequest(BaseModel):
     sql: str = Field(description="SQL to review. It is never executed by this endpoint.")
     asset_context: dict[str, Any] | None = Field(
         default=None,
-        description="Optional mock SQL asset context.",
+        description="Optional governed SQL asset context.",
     )
 
 
@@ -84,9 +84,9 @@ class ToolDryRunRequest(BaseModel):
     action: str | None = Field(default=None, description="Requested tool action.")
     parameters: dict[str, Any] = Field(
         default_factory=dict,
-        description="Structured mock tool input.",
+        description="Structured tool input.",
     )
-    asset_type: str | None = Field(default=None, description="Target mock asset type.")
+    asset_type: str | None = Field(default=None, description="Target asset type.")
     risk_level: ToolRiskLevel = Field(
         default=ToolRiskLevel.LOW,
         description="Tool call risk level.",
@@ -110,13 +110,13 @@ class ToolDryRunResponse(TraceableResponse):
 
 class PlanApprovalRequest(BaseModel):
     approver: str = Field(
-        default="mock_security_reviewer",
-        description="Mock approver id.",
+        default="security_reviewer",
+        description="Approver id.",
     )
 
 
 class PlanRejectRequest(PlanApprovalRequest):
-    reason: str = Field(default="Rejected in mock approval flow.", description="Reject reason.")
+    reason: str = Field(default="Rejected in approval flow.", description="Reject reason.")
 
 
 class PlanDecisionResponse(TraceableResponse):
@@ -155,8 +155,8 @@ def create_app() -> FastAPI:
     engine = GovernanceEngine(audit_logger=audit_logger)
     engine.start_session(
         UserContext(
-            user_id="demo_user",
-            display_name="Demo Data Steward",
+                user_id="demo_user",
+                display_name="Data Steward",
             roles=(UserRole.DATA_STEWARD,),
         )
     )

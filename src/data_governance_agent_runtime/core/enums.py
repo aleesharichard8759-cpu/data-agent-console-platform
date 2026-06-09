@@ -15,7 +15,7 @@ class Decision(StrEnum):
 
 
 class Environment(StrEnum):
-    MOCK = "mock"
+    LOCAL = "local"
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -34,4 +34,3 @@ class SqlStatementType(StrEnum):
     UNKNOWN = "unknown"
     MUTATION = "mutation"
     DDL = "ddl"
-

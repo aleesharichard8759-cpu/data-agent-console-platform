@@ -22,7 +22,6 @@ const displayLabelKeys: Record<string, string> = {
   run_governance_task: "治理任务",
   read_only: "只读",
   metadata_only: "仅元数据",
-  mock: "Mock",
   allow: "允许",
   ask: "需审批",
   deny: "拒绝",

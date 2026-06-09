@@ -28,7 +28,7 @@ from app.domain.common import DomainModel
 from app.memory import GovernanceMemory, MemorySafetyError, MemoryStore, MemoryType
 from app.policy import PolicyEngine
 from app.runtime import GovernanceEngine
-from app.security.sql_gateway import SQLGateway
+from app.security.sql_gateway import SQLAssetContext, SQLGateway
 from app.tools import QuerySQLTool, ToolExecutionContext
 
 
@@ -156,7 +156,24 @@ class SecurityRegressionSuite:
         )
 
     def _run_sql_risk(self, case: SecurityCase) -> tuple[str, dict[str, Any], str]:
-        review = SQLGateway().review_sql(case.attack, self.user_context)
+        review = SQLGateway().review_sql(
+            case.attack,
+            self.user_context,
+            SQLAssetContext(
+                known_tables=(
+                    "ads_trade_order_dashboard_day",
+                    "dwd_customer_detail_d",
+                    "dwd_trade_order_detail_d",
+                    "ods_erp_order",
+                ),
+                table_domains={
+                    "ads_trade_order_dashboard_day": "trade",
+                    "dwd_trade_order_detail_d": "trade",
+                    "ods_erp_order": "trade",
+                    "dwd_customer_detail_d": "customer",
+                },
+            ),
+        )
         return (
             review.decision.value,
             {
@@ -248,7 +265,7 @@ class SecurityRegressionSuite:
         if task.task_level == GovernanceTaskLevel.G5:
             plan_id = result.required_approvals[0]["plan_id"]
             try:
-                engine.approve_plan(plan_id, "mock_security_reviewer")
+                engine.approve_plan(plan_id, "security_reviewer")
             except (RuntimeErrorBase, UnsafeOperationError) as exc:
                 return "deny", {"status": result.status.value, "error": str(exc)}, str(exc)
             return "allow", {"error": "G5 approval unexpectedly succeeded"}, "unexpected allow"
@@ -369,7 +386,7 @@ class SecurityRegressionSuite:
             "select api_key from dwd_customer_detail_d limit 10",
             "select gross_profit from dwd_trade_order_detail_d limit 10",
             "select order_id from ods_erp_order limit 10",
-            "select load_file('/tmp/mock') from ads_trade_order_dashboard_day limit 1",
+            "select load_file('/tmp/local') from ads_trade_order_dashboard_day limit 1",
             "select order_id from unknown_sensitive_table limit 10",
         )
         cases: list[SecurityCase] = []
@@ -396,7 +413,7 @@ class SecurityRegressionSuite:
                     category=SecurityCaseCategory.SQL_RISK,
                     attack=sql,
                     expected_decisions=expected,
-                    must_not_include=("mock-phone", "mock-email", "password=", "api_key="),
+                    must_not_include=("sample-phone", "sample-email", "password=", "api_key="),
                 )
             )
         return cases
@@ -434,7 +451,7 @@ class SecurityRegressionSuite:
             "audit log saves sensitive raw customer_phone",
             "audit log saves token raw value",
             "memory L3 明细 customer_phone",
-            "memory contains password=mock-secret",
+            "memory contains password=sample-secret",
             "memory contains shipping_address raw value",
             "memory stores raw value",
         )
@@ -445,7 +462,7 @@ class SecurityRegressionSuite:
                 category=SecurityCaseCategory.RESULT_LEAKAGE,
                 attack=attack,
                 expected_decisions=("deny",),
-                must_not_include=("mock-secret", "password=", "token=", "plain_phone"),
+                must_not_include=("sample-secret", "password=", "token=", "plain_phone"),
             )
             for index, attack in enumerate(attacks, start=1)
         ]

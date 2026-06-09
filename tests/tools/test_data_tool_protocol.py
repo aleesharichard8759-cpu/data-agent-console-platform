@@ -13,7 +13,7 @@ from app.tools import (
     SearchMetadataTool,
     ToolExecutionContext,
     ToolNotFoundError,
-    build_mock_tool_registry,
+    build_real_tool_registry,
 )
 
 
@@ -94,13 +94,14 @@ def make_rule(effect: PolicyDecision, action: str = "spy.execute") -> PolicyRule
 
 
 def test_register_and_list_tools() -> None:
-    registry = build_mock_tool_registry()
+    registry = build_real_tool_registry()
 
     names = [tool.name for tool in registry.list_tools()]
 
     assert names == [
         "generate_quality_rules",
         "get_metric_definition",
+        "get_table_metadata",
         "query_sql",
         "search_metadata",
     ]
@@ -169,7 +170,7 @@ def test_default_registry_hooks_mask_sensitive_tool_output() -> None:
     assert "data.customer_email" in result.masked_fields
 
 
-def test_read_only_tool_executes_in_plan_mode() -> None:
+def test_read_only_tool_is_allowed_in_plan_mode_but_requires_real_connector() -> None:
     registry = DataToolRegistry()
     registry.register(SearchMetadataTool())
     context = make_context(PolicyEngine(), plan_mode=True)
@@ -183,5 +184,5 @@ def test_read_only_tool_executes_in_plan_mode() -> None:
 
     result = registry.execute_tool(request, context)
 
-    assert result.status == ToolExecutionStatus.SUCCEEDED
-    assert result.output["data"]["results"][0]["name"] == "ods_erp_order"
+    assert result.status == ToolExecutionStatus.FAILED
+    assert "No real metadata connector is configured" in (result.error_message or "")

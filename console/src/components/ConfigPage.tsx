@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { pageGuidance } from "../data/mockData";
+import { pageGuidance } from "../data/pageConfig";
 import { displayLabel } from "../displayLabels";
 import type { ColumnConfig, EntityRow, FieldConfig, PageConfig, RouteKey, Translate } from "../types";
 
@@ -243,7 +243,7 @@ export function ConfigPage({ page, rows, onRowsChange, onNavigate, t }: ConfigPa
               <h3>{t("配置对象")}</h3>
               <p>
                 {filteredRows.length} {t("条记录")}
-                {isReadOnly ? `, ${t("当前页面只读观测")}` : `, ${t("保存仅更新本地 mock state")}`}
+                {isReadOnly ? `, ${t("当前页面只读观测")}` : `, ${t("保存仅更新本地配置")}`}
               </p>
             </div>
           <input
@@ -329,7 +329,7 @@ export function ConfigPage({ page, rows, onRowsChange, onNavigate, t }: ConfigPa
                 </button>
                 {!isReadOnly ? (
                   <button type="submit" className="primary-button">
-                    {t("保存到 mock state")}
+                    {t("保存配置")}
                   </button>
                 ) : null}
               </div>

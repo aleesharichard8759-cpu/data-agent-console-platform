@@ -80,7 +80,7 @@ def test_quality_rule_suggestions_are_generated() -> None:
     )
 
 
-def test_metadata_issues_are_identified() -> None:
+def test_metadata_task_fails_closed_without_real_connector_findings() -> None:
     app = create_app()
     task_id = call_route(
         app,
@@ -92,7 +92,9 @@ def test_metadata_issues_are_identified() -> None:
     result = call_route(app, "/tasks/{task_id}/run", "POST", task_id)
 
     assert result["status"] == "completed"
-    assert any("Assign owner" in recommendation for recommendation in result["recommendations"])
+    assert not any("Assign owner" in recommendation for recommendation in result["recommendations"])
+    subagent_evidence = [item for item in result["evidence"] if item.get("node") == "subagents"]
+    assert subagent_evidence
 
 
 def test_demo_audit_events_are_complete_for_task() -> None:
@@ -111,5 +113,5 @@ def test_demo_audit_events_are_complete_for_task() -> None:
     assert "task_created" in event_types
     assert "tool_requested" in event_types
     assert "policy_evaluated" in event_types
-    assert "tool_executed" in event_types
+    assert "error_raised" in event_types
     assert "task_completed" in event_types

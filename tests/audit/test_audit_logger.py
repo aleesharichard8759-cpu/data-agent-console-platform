@@ -136,7 +136,7 @@ def test_tool_call_produces_audit_events() -> None:
     assert result.output["audit_event_id"]
     assert AuditEventType.TOOL_REQUESTED in event_types
     assert AuditEventType.POLICY_EVALUATED in event_types
-    assert AuditEventType.TOOL_EXECUTED in event_types
+    assert AuditEventType.ERROR_RAISED in event_types
 
 
 def test_deny_produces_permission_denied_event() -> None:

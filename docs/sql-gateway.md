@@ -2,7 +2,7 @@
 
 SQL Gateway 是 Data Governance Agent Runtime 的 SQL 安全审查层。Data Agent 不允许直接执行 SQL，所有 SQL 必须先进入 SQL Gateway 做风险识别、裁决和必要的安全改写。
 
-当前阶段只实现 SQL 安全审查和 mock 执行，不连接真实数据库，不发送真实 SQL 到任何外部系统。
+当前 `QuerySQLTool` 已切换到真实 Connector 路径：未配置 StarRocks 只读连接时 fail closed；配置后只在 SQL Gateway 返回 `ALLOW` 时执行真实只读查询。
 
 ## 执行边界
 
@@ -13,7 +13,7 @@ QuerySQLTool
   -> SQLGateway.review_sql()
   -> DENY: 不执行，返回 reason
   -> ASK: 不执行，返回 approval_required
-  -> ALLOW: 返回 mock result
+  -> ALLOW: 调用 WarehouseConnector.query_preview()
 ```
 
 ## SQLRiskType
@@ -28,7 +28,7 @@ QuerySQLTool
 | `RAW_LAYER_ACCESS` | 查询 ODS 原始层 |
 | `CROSS_DOMAIN_JOIN` | 跨业务域 JOIN |
 | `LARGE_RESULT_RISK` | LIMIT 过大 |
-| `UNKNOWN_TABLE` | 表不在 mock 资产上下文中 |
+| `UNKNOWN_TABLE` | 表不在显式资产上下文或 Connector 白名单中 |
 | `UNSAFE_FUNCTION` | 检测到高风险函数或文件操作 |
 
 ## SQLReviewResult
@@ -37,7 +37,7 @@ SQL Gateway 返回 `SQLReviewResult`：
 
 | 字段 | 含义 |
 |---|---|
-| `allowed` | 是否允许 mock 执行 |
+| `allowed` | 是否允许进入 Connector 执行 |
 | `decision` | `ALLOW`、`ASK` 或 `DENY` |
 | `risks` | 风险列表，每个风险都有明确 reason |
 | `rewritten_sql` | 安全改写后的 SQL，例如自动追加 LIMIT |
@@ -58,23 +58,25 @@ SQL Gateway 返回 `SQLReviewResult`：
 | 查询 ADS/DWS 聚合指标 | `ALLOW` |
 | 低风险 SELECT 无 LIMIT | 自动追加 `LIMIT 100` |
 
-## Mock 执行
+## 真实执行
 
-`QuerySQLTool` 只有在以下条件全部满足时才返回 mock result：
+`QuerySQLTool` 只有在以下条件全部满足时才会调用真实只读 Connector：
 
 1. DataTool 权限检查通过。
 2. Policy Engine 返回 `ALLOW`。
 3. SQL Gateway 返回 `ALLOW`。
+4. `DATAGENT_STARROCKS_SECRET_REF` 已配置并能解析凭证。
+5. SQL 引用表在 `DATAGENT_STARROCKS_ALLOWED_TABLES` 白名单内。
 
-如果 SQL Gateway 返回 `DENY` 或 `ASK`，工具主体不会 mock 执行，并会返回审计信息。
+如果任一条件不满足，工具主体不执行查询并返回失败或拒绝原因。
 
 即使 SQL 被允许，`QuerySQLTool` 的结果也默认 `allow_in_model_context=false`。治理报告应引用结构化摘要、审计事件和 evidence refs，而不是把通用 SQL 结果直接放入模型上下文。
 
 ## 安全要求
 
-- 不执行真实 SQL。
-- 不连接真实数据库。
-- 不保存真实数据库连接配置。
 - 不允许绕过 SQL Gateway。
+- 不允许 DDL / DML / 危险函数。
+- 不保存真实数据库连接配置或凭证明文。
+- 表访问必须受 Connector 白名单约束。
 - 所有风险必须返回明确 reason。
-- 真实仓库、调度器、权限系统接入必须在后续 connector 中实现，并继续保留 SQL Gateway 边界。
+- 所有查询结果必须限制行数，并经过审计链路。

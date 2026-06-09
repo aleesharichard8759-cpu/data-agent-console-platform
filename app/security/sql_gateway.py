@@ -38,7 +38,7 @@ class SQLRisk(DomainModel):
 
 
 class SQLReviewResult(DomainModel):
-    allowed: bool = Field(description="Whether SQL may be mock-executed.")
+    allowed: bool = Field(description="Whether SQL may be executed through the warehouse connector.")
     decision: PolicyDecision = Field(description="Gateway decision: allow, ask, or deny.")
     risks: tuple[SQLRisk, ...] = Field(default_factory=tuple, description="Detected SQL risks.")
     rewritten_sql: str | None = Field(
@@ -51,42 +51,11 @@ class SQLReviewResult(DomainModel):
 
 class SQLAssetContext(DomainModel):
     known_tables: tuple[str, ...] = Field(
-        default=(
-            "ads_order_summary",
-            "dws_order_metric",
-            "dim_product_sku",
-            "ods_order_detail",
-            "dwd_order_detail",
-            "ods_erp_order",
-            "ods_erp_order_item",
-            "dwd_trade_order_detail_d",
-            "dws_trade_order_sku_day",
-            "ads_trade_order_dashboard_day",
-            "dwd_customer_detail_d",
-            "dwd_after_sale_rma_detail_d",
-            "dim_product_sku",
-            "dim_shop",
-            "dim_warehouse",
-        ),
-        description="Tables known to the mock gateway.",
+        default=(),
+        description="Optional governed table allow-list for SQL review.",
     )
     table_domains: dict[str, str] = Field(
-        default_factory=lambda: {
-            "ads_order_summary": "trade",
-            "dws_order_metric": "trade",
-            "ods_order_detail": "trade",
-            "dwd_order_detail": "trade",
-            "ods_erp_order": "trade",
-            "ods_erp_order_item": "trade",
-            "dwd_trade_order_detail_d": "trade",
-            "dws_trade_order_sku_day": "trade",
-            "ads_trade_order_dashboard_day": "trade",
-            "dwd_customer_detail_d": "customer",
-            "dwd_after_sale_rma_detail_d": "after_sale",
-            "dim_product_sku": "product",
-            "dim_shop": "organization",
-            "dim_warehouse": "inventory",
-        },
+        default_factory=dict,
         description="Table to data-domain mapping.",
     )
     column_sensitivity: dict[str, SensitivityLevel] = Field(
@@ -105,7 +74,7 @@ class SQLAssetContext(DomainModel):
 
 
 class SQLGateway:
-    """SQL safety reviewer and mock executor gate. It never connects to a database."""
+    """SQL safety reviewer for real warehouse connector execution."""
 
     _ddl_pattern = re.compile(r"\b(drop|alter|truncate|create)\b", re.IGNORECASE)
     _dml_pattern = re.compile(r"\b(insert|update|delete|merge)\b", re.IGNORECASE)
@@ -339,7 +308,7 @@ class SQLGateway:
         risks: list[SQLRisk] = []
         known_tables = set(context.known_tables)
         for table in tables:
-            if table not in known_tables:
+            if known_tables and table not in known_tables:
                 risks.append(
                     SQLRisk(
                         risk_type=SQLRiskType.UNKNOWN_TABLE,

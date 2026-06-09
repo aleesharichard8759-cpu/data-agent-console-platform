@@ -5,7 +5,7 @@ from data_governance_agent_runtime.core.models import AuditEvent, RuntimeContext
 
 
 class AuditRecorder:
-    """Append-only in-memory audit recorder for the mock runtime stage."""
+    """Append-only in-memory audit recorder for local runtime execution."""
 
     def __init__(self) -> None:
         self._events: list[AuditEvent] = []
@@ -32,4 +32,3 @@ class AuditRecorder:
 
     def list_events(self) -> tuple[AuditEvent, ...]:
         return tuple(self._events)
-

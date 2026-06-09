@@ -2,7 +2,7 @@
 
 Data Governance Agent Runtime 是面向企业 ERP / 数仓场景的数据治理任务执行型智能体运行时骨架。
 
-阶段 0 只创建项目结构、基础配置、FastAPI health check 和结构测试，不实现 Agent 业务逻辑，不连接真实数据库，不执行任何生产变更。
+当前版本保留 Runtime、Policy、Security、Audit、Memory、Connectors 分层结构，已移除内置演示数据，并通过只读 Connector 接入真实数仓。
 
 ## 项目目标
 
@@ -31,7 +31,7 @@ Agent 不直接访问生产数据。
 Agent -> DataTool -> Policy Engine -> SQL Gateway -> DLP/Masking -> Audit
 ```
 
-当前阶段不提供真实数据库连接、不保存真实密钥、不写入真实 Token、密码、手机号、邮箱或地址。未来即使接入 OpenMetadata、Doris、StarRocks、DolphinScheduler、Langfuse 或工单系统，也必须通过 connectors 模块和安全策略层进行隔离。
+当前项目支持通过 `app.connectors` 接入真实 StarRocks 只读源。未配置真实连接时，工具调用会 fail closed，不返回内置样例结果。项目仍不保存真实密钥、Token、密码、手机号、邮箱或地址；所有凭证只能通过 `secret_ref` 引用，并由运行环境注入。
 
 ## 目录结构
 
@@ -72,10 +72,29 @@ curl http://127.0.0.1:8000/health
 {"status":"ok"}
 ```
 
+## 连接真实 StarRocks
+
+真实连接由环境变量启用。`secret_ref` 是凭证引用，不是密码明文；代码会把 `secret://prod/starrocks/rma_ro` 规范化为 `DATAGENT_SECRET_PROD_STARROCKS_RMA_RO` 并读取其中的 JSON。
+
+```bash
+export DATAGENT_STARROCKS_SECRET_REF="secret://prod/starrocks/rma_ro"
+export DATAGENT_SECRET_PROD_STARROCKS_RMA_RO='{"host":"starrocks-fe.example.com","port":9030,"user":"rma_ro","password":"***","database":"rma_ads"}'
+export DATAGENT_STARROCKS_ALLOWED_TABLES="ads_afs_rma_multi_dim_metric_1d"
+export DATAGENT_STARROCKS_MAX_ROWS="100"
+export DATAGENT_STARROCKS_TIMEOUT_SECONDS="30"
+```
+
+连接路径保持：
+
+```text
+Agent -> DataTool -> Policy Engine -> SQL Gateway -> StarRocksWarehouseConnector -> Audit
+```
+
+只有 SQL Gateway 返回 `ALLOW` 且表名在 `DATAGENT_STARROCKS_ALLOWED_TABLES` 白名单内时，`QuerySQLTool` 才会用只读账号查询真实库。
+
 ## 运行测试
 
 ```bash
 uv run pytest
 uv run ruff check .
 ```
-

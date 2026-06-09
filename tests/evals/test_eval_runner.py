@@ -49,6 +49,11 @@ def test_eval_runner_generates_report() -> None:
 
     assert len(results) == len(cases)
     assert report.total_cases == len(cases)
-    assert report.passed_cases == len(cases)
-    assert report.failed_cases == 0
-    assert report.pass_rate == 1.0
+    assert report.passed_cases < len(cases)
+    assert report.failed_cases > 0
+    assert report.pass_rate < 1.0
+    assert any(
+        "No real warehouse connector is configured" in result.observation.output_text
+        for result in report.case_results
+        if not result.passed
+    )

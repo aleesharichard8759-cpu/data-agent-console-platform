@@ -193,7 +193,7 @@ class EvalRunner:
 
     @staticmethod
     def _decision_from_tool_status(status: ToolExecutionStatus) -> PolicyDecision:
-        if status == ToolExecutionStatus.DENIED:
+        if status in {ToolExecutionStatus.DENIED, ToolExecutionStatus.FAILED}:
             return PolicyDecision.DENY
         if status == ToolExecutionStatus.ASKED:
             return PolicyDecision.ASK

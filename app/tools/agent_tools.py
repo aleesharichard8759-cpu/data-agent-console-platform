@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
-from app.connectors.mock_catalog import get_lineage, get_table_metadata
-from app.connectors.mock_warehouse import get_column_profile, run_quality_check
+from app.connectors.base import ConnectorCallContext
+from app.connectors.interfaces import MetadataConnector
 from app.domain.classification import SensitivityLevel
 from app.tools.base import DataTool
 from app.tools.context import ToolExecutionContext
+
+
+def _real_connector_required(capability: str) -> RuntimeError:
+    return RuntimeError(
+        f"{capability} requires a configured real connector. Built-in sample data has been removed."
+    )
 
 
 class GetTableMetadataInput(BaseModel):
@@ -26,19 +32,38 @@ class GetTableMetadataOutput(BaseModel):
 
 class GetTableMetadataTool(DataTool):
     name = "get_table_metadata"
-    description = "Return mock table metadata quality issues."
+    description = "Return table metadata through a configured real metadata connector."
     input_model = GetTableMetadataInput
     output_model = GetTableMetadataOutput
     max_rows = 20
     max_bytes = 128 * 1024
+    _metadata_connector: MetadataConnector | None = PrivateAttr()
+
+    def __init__(self, metadata_connector: MetadataConnector | None = None) -> None:
+        super().__init__()
+        if metadata_connector is None:
+            from app.connectors import build_metadata_connector_from_env
+
+            metadata_connector = build_metadata_connector_from_env()
+        self._metadata_connector = metadata_connector
 
     def allow_in_model_context(self) -> bool:
         return True
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
         payload = GetTableMetadataInput.model_validate(validated_input)
-        return get_table_metadata(payload.table_name)
+        if self._metadata_connector is None:
+            raise _real_connector_required("Table metadata lookup")
+        return self._metadata_connector.get_table_metadata(
+            payload.table_name,
+            ConnectorCallContext(
+                user_context=context.user_context,
+                audit_logger=context.audit_logger,
+                session_id=context.session_id,
+                task_id=str(context.task_context.task_id) if context.task_context else None,
+                agent_name=context.agent_name,
+            ),
+        )
 
 
 class GetColumnProfileInput(BaseModel):
@@ -49,8 +74,8 @@ class GetColumnProfileInput(BaseModel):
 class GetColumnProfileOutput(BaseModel):
     table_name: str = Field(description="Table name.")
     column_name: str = Field(description="Column name.")
-    null_rate: float = Field(description="Mock null rate.")
-    unique_rate: float = Field(description="Mock unique rate.")
+    null_rate: float = Field(description="Null rate.")
+    unique_rate: float = Field(description="Unique rate.")
     sample_summary: str = Field(description="Masked sample summary.")
     sample_values_returned: bool = Field(description="Whether raw sample values are returned.")
     sensitivity_level: str = Field(description="Sensitivity level.")
@@ -59,7 +84,7 @@ class GetColumnProfileOutput(BaseModel):
 
 class GetColumnProfileTool(DataTool):
     name = "get_column_profile"
-    description = "Return safe mock column profile summary without sensitive plaintext."
+    description = "Return safe column profile summary through a configured warehouse connector."
     input_model = GetColumnProfileInput
     output_model = GetColumnProfileOutput
     max_rows = 1
@@ -69,9 +94,8 @@ class GetColumnProfileTool(DataTool):
         return True
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
-        payload = GetColumnProfileInput.model_validate(validated_input)
-        return get_column_profile(payload.table_name, payload.column_name)
+        del validated_input, context
+        raise _real_connector_required("Column profile lookup")
 
 
 class GetLineageInput(BaseModel):
@@ -80,14 +104,14 @@ class GetLineageInput(BaseModel):
 
 class GetLineageOutput(BaseModel):
     table_name: str = Field(description="Table name.")
-    upstream: tuple[str, ...] = Field(description="Mock upstream assets.")
-    downstream: tuple[str, ...] = Field(description="Mock downstream assets.")
-    impact_summary: str = Field(description="Mock lineage impact summary.")
+    upstream: tuple[str, ...] = Field(description="Upstream assets.")
+    downstream: tuple[str, ...] = Field(description="Downstream assets.")
+    impact_summary: str = Field(description="Lineage impact summary.")
 
 
 class GetLineageTool(DataTool):
     name = "get_lineage"
-    description = "Return mock lineage for governed catalog assets."
+    description = "Return lineage through a configured real lineage connector."
     input_model = GetLineageInput
     output_model = GetLineageOutput
     max_rows = 20
@@ -97,9 +121,8 @@ class GetLineageTool(DataTool):
         return True
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
-        payload = GetLineageInput.model_validate(validated_input)
-        return get_lineage(payload.table_name)
+        del validated_input, context
+        raise _real_connector_required("Lineage lookup")
 
 
 class RunQualityCheckInput(BaseModel):
@@ -117,7 +140,7 @@ class RunQualityCheckOutput(BaseModel):
 
 class RunQualityCheckTool(DataTool):
     name = "run_quality_check"
-    description = "Run mock quality evidence checks."
+    description = "Run quality evidence checks through a configured real quality connector."
     input_model = RunQualityCheckInput
     output_model = RunQualityCheckOutput
     max_rows = 20
@@ -127,9 +150,8 @@ class RunQualityCheckTool(DataTool):
         return True
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
-        payload = RunQualityCheckInput.model_validate(validated_input)
-        return run_quality_check(payload.table_name)
+        del validated_input, context
+        raise _real_connector_required("Quality check")
 
 
 class ClassifySensitivityInput(BaseModel):
@@ -144,7 +166,7 @@ class ClassifySensitivityOutput(BaseModel):
 
 class ClassifySensitivityTool(DataTool):
     name = "classify_sensitivity"
-    description = "Classify mock field sensitivity levels."
+    description = "Classify field sensitivity levels from supplied field names."
     input_model = ClassifySensitivityInput
     output_model = ClassifySensitivityOutput
     max_rows = 50
@@ -199,7 +221,7 @@ class CheckPermissionOutput(BaseModel):
 
 class CheckPermissionTool(DataTool):
     name = "check_permission"
-    description = "Return mock permission inspection findings."
+    description = "Inspect permissions through a configured real permission connector."
     input_model = CheckPermissionInput
     output_model = CheckPermissionOutput
     max_rows = 20
@@ -209,15 +231,8 @@ class CheckPermissionTool(DataTool):
         return False
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
-        payload = CheckPermissionInput.model_validate(validated_input)
-        return {
-            "findings": [
-                f"{payload.asset_name} should be limited to governed roles.",
-                "High-sensitivity fields require approval before access.",
-            ],
-            "requires_review": True,
-        }
+        del validated_input, context
+        raise _real_connector_required("Permission inspection")
 
 
 class GenerateMetricCardInput(BaseModel):
@@ -234,7 +249,7 @@ class GenerateMetricCardOutput(BaseModel):
 
 class GenerateMetricCardTool(DataTool):
     name = "generate_metric_card"
-    description = "Generate a mock metric governance card."
+    description = "Generate a metric governance card through a configured real metric connector."
     input_model = GenerateMetricCardInput
     output_model = GenerateMetricCardOutput
     max_rows = 1
@@ -244,12 +259,5 @@ class GenerateMetricCardTool(DataTool):
         return True
 
     def _execute(self, validated_input: BaseModel, context: ToolExecutionContext) -> dict[str, Any]:
-        del context
-        payload = GenerateMetricCardInput.model_validate(validated_input)
-        return {
-            "business_definition": f"{payload.metric_name} governed business definition.",
-            "technical_definition": "Aggregate from governed ADS/DWS mock assets only.",
-            "dimensions": ["date", "business_domain", "channel"],
-            "time_field": "metric_date",
-            "open_questions": ["Confirm final owner and exception handling rules."],
-        }
+        del validated_input, context
+        raise _real_connector_required("Metric card generation")

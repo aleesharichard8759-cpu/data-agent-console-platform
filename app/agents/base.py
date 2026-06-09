@@ -30,7 +30,7 @@ class AgentTaskContext(DomainModel):
     task: GovernanceTask = Field(description="Governance task assigned to the agent.")
     user_context: UserContext = Field(description="Runtime user context.")
     session_id: str | None = Field(default=None, description="Runtime session id.")
-    dry_run: bool = Field(default=True, description="Whether tool execution is dry-run mock mode.")
+    dry_run: bool = Field(default=True, description="Whether tool execution is dry-run mode.")
 
 
 class AgentResult(DomainModel):
@@ -113,4 +113,4 @@ class BaseAgent(ABC):
             return "ods_erp_order"
         if task.domain.value == "product":
             return "dim_product_sku"
-        return "governed_mock_asset"
+        return "governed_asset"

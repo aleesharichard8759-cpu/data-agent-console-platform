@@ -371,7 +371,7 @@ export function RuntimeWorkbenchPage({ t }: { t: Translate }) {
     setJobError(null);
     try {
       const result = await apiPost<PlanDecisionResponse>(`/plans/${planId}/${action}`, {
-        approver: "mock_security_reviewer",
+        approver: "security_reviewer",
         reason: "Rejected from Runtime Workbench."
       });
       setPlanDecision(result);

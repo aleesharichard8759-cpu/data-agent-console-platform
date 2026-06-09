@@ -16,6 +16,7 @@ from app.domain import (
     GovernanceTaskLevel,
     GovernanceTaskType,
     ToolCallRequest,
+    ToolExecutionStatus,
     ToolRiskLevel,
     UserContext,
     UserRole,
@@ -103,41 +104,42 @@ def test_security_agent_identifies_sensitive_fields_and_vetoes_context() -> None
     assert "L5" in result.findings["levels"]
 
 
-def test_data_quality_agent_generates_rule_suggestions() -> None:
+def test_data_quality_agent_requires_real_quality_connector() -> None:
     registry = make_agent_registry()
     agent = registry.get_agent("data_quality_agent")
 
     result = agent.run(make_context(make_task(GovernanceTaskType.DATA_QUALITY)))
 
     assert result.status == "completed"
-    assert result.findings["completeness_rules"]
-    assert result.findings["strong_rules"]
-    assert result.findings["weak_rules"]
+    assert result.findings["completeness_rules"] == []
+    assert all(tool_result.status == ToolExecutionStatus.FAILED for tool_result in result.tool_results)
+    assert all(
+        "requires a configured real connector" in (tool_result.error_message or "")
+        for tool_result in result.tool_results
+    )
 
 
-def test_metadata_agent_outputs_metadata_issues() -> None:
+def test_metadata_agent_requires_real_metadata_connector() -> None:
     registry = make_agent_registry()
     agent = registry.get_agent("metadata_agent")
 
     result = agent.run(make_context(make_task(GovernanceTaskType.METADATA_COMPLETION)))
 
-    assert result.findings["missing_owner_tables"]
-    assert result.findings["missing_comment_fields"]
-    assert result.findings["duplicate_table_candidates"]
-    assert result.findings["completion_suggestions"]
+    assert result.findings["missing_owner_tables"] == []
+    assert result.findings["missing_comment_fields"] == []
+    assert all(tool_result.status == ToolExecutionStatus.FAILED for tool_result in result.tool_results)
 
 
-def test_metric_agent_outputs_metric_card() -> None:
+def test_metric_agent_requires_real_metric_connector() -> None:
     registry = make_agent_registry()
     agent = registry.get_agent("metric_agent")
 
     result = agent.run(make_context(make_task(GovernanceTaskType.METRIC_GOVERNANCE)))
 
-    assert result.findings["business_definition"]
-    assert result.findings["technical_definition"]
-    assert result.findings["dimensions"]
-    assert result.findings["time_field"] == "metric_date"
-    assert result.findings["open_questions"]
+    assert result.findings["business_definition"] is None
+    assert result.findings["technical_definition"] is None
+    assert result.findings["dimensions"] == []
+    assert all(tool_result.status == ToolExecutionStatus.FAILED for tool_result in result.tool_results)
 
 
 def test_orchestrator_dispatches_multiple_agents() -> None:

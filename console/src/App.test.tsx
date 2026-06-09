@@ -42,7 +42,7 @@ const dataQARunResult = {
     evidence: [{ metric: "complaint_rate", value: 0.023 }],
     metric_definition: "客诉量 / 销售订单量",
     sources: ["sql_gateway_reviewed_query"],
-    limitations: ["mock result"],
+    limitations: ["real connector result"],
     suggestions: ["关注质量问题原因"],
     follow_up_questions: [],
     audit_refs: ["audit-1"]
@@ -81,7 +81,7 @@ describe("Data Agent Console MVP", () => {
     expandNavGroup("Runtime 配置中心+");
     fireEvent.click(screen.getByRole("button", { name: /SQL 网关/ }));
     expect(screen.getByRole("heading", { name: "SQL Gateway", level: 2 })).toBeInTheDocument();
-    expect(screen.getByText("禁止 DDL / DML")).toBeInTheDocument();
+    expect(screen.getAllByText(/禁止 DDL\/DML/).length).toBeGreaterThan(0);
   });
 
   it("filters dashboard journeys by the selected role", () => {
@@ -98,7 +98,7 @@ describe("Data Agent Console MVP", () => {
     expect(rmaJourney).not.toBeNull();
     expect(screen.queryByRole("heading", { name: "接入一个新数据源", level: 3 })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "验证 Agent 能否上线", level: 3 })).not.toBeInTheDocument();
-    expect(screen.getAllByText("RMA Agent 发布门禁").length).toBeGreaterThan(0);
+    expect(screen.getByText("今日最重要 3 件事")).toBeInTheDocument();
     expect(screen.queryByText("StarRocks 只读源健康检查")).not.toBeInTheDocument();
 
     fireEvent.click(within(rmaJourney!).getByRole("button", { name: "开始" }));
@@ -141,7 +141,7 @@ describe("Data Agent Console MVP", () => {
     expect(screen.getByText("当前环境")).toBeInTheDocument();
   });
 
-  it("runs the Runtime safety simulator through Mock API", async () => {
+  it("runs the Runtime safety simulator through real API", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       if (url.includes("/api/sql/review")) {
@@ -204,7 +204,7 @@ describe("Data Agent Console MVP", () => {
           audit_refs: ["audit-run-1"],
           status: "plan_required",
           executed_nodes: ["task_intake", "governance_planning"],
-          required_approvals: [{ plan_id: "plan-1", risk_level: "G4", required_approvers: ["mock_security_reviewer"] }],
+          required_approvals: [{ plan_id: "plan-1", risk_level: "G4", required_approvers: ["security_reviewer"] }],
           final_response: "Approval required."
         });
       }
@@ -261,7 +261,7 @@ describe("Data Agent Console MVP", () => {
 
     expect(screen.getByRole("heading", { name: "Trace / Audit Logs", level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "新增审计备注" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "查看" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("当前观测页暂无可展示数据。")).toBeInTheDocument();
   });
 
   it("opens and closes create modal", () => {
@@ -269,24 +269,24 @@ describe("Data Agent Console MVP", () => {
 
     expandNavGroup("Data&QA 产品配置+");
     fireEvent.click(screen.getByRole("button", { name: "Agent 应用" }));
-    fireEvent.click(screen.getByRole("button", { name: "新建 Agent" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "新建 Agent" })[0]);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "取消" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("saves local mock state from a modal", () => {
+  it("saves local configuration from a modal", () => {
     render(<App />);
 
     expandNavGroup("Data&QA 产品配置+");
     fireEvent.click(screen.getByRole("button", { name: /语义层/ }));
-    fireEvent.click(screen.getByRole("button", { name: "新增语义对象" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "新增语义对象" })[0]);
     fireEvent.change(screen.getByLabelText("名称"), { target: { value: "退货率" } });
     fireEvent.change(screen.getByLabelText("业务定义"), { target: { value: "退货量 / 销售订单量" } });
     fireEvent.change(screen.getByLabelText("字段映射"), { target: { value: "return_count / sales_order_count" } });
     fireEvent.change(screen.getByLabelText("负责人"), { target: { value: "数据分析师" } });
-    fireEvent.click(screen.getByRole("button", { name: "保存到 mock state" }));
+    fireEvent.click(screen.getByRole("button", { name: "保存配置" }));
 
     expect(screen.getByText("退货率")).toBeInTheDocument();
   });

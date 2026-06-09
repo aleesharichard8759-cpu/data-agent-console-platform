@@ -3,7 +3,7 @@ from data_governance_agent_runtime.core.models import SqlRequest
 from data_governance_agent_runtime.sql.gateway import SqlGateway
 
 
-def test_sql_gateway_allows_only_mock_select_execution() -> None:
+def test_sql_gateway_classifies_select_without_local_result_rows() -> None:
     gateway = SqlGateway()
 
     result = gateway.execute(
@@ -11,8 +11,8 @@ def test_sql_gateway_allows_only_mock_select_execution() -> None:
     )
 
     assert result.statement_type == SqlStatementType.SELECT
-    assert result.row_count == 2
-    assert result.rows[1]["email_hash"] == "***MASKED***"
+    assert result.row_count == 0
+    assert result.rows == []
 
 
 def test_sql_gateway_blocks_mutation_execution() -> None:

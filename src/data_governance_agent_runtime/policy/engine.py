@@ -16,7 +16,7 @@ class PolicyEngine:
             deny_production_environment,
             require_sql_gateway_for_sql_actions,
             ask_for_high_risk_actions,
-            allow_mock_governance_actions,
+            allow_non_production_governed_actions,
         ]
 
     def evaluate(self, context: RuntimeContext, request: ToolRequest) -> PolicyDecision:
@@ -76,14 +76,14 @@ def ask_for_high_risk_actions(
     return None
 
 
-def allow_mock_governance_actions(
+def allow_non_production_governed_actions(
     context: RuntimeContext, request: ToolRequest
 ) -> PolicyDecision | None:
     del request
-    if context.environment in {Environment.MOCK, Environment.DEVELOPMENT, Environment.STAGING}:
+    if context.environment in {Environment.LOCAL, Environment.DEVELOPMENT, Environment.STAGING}:
         return PolicyDecision(
             decision=Decision.ALLOW,
-            reason="Request allowed for non-production governed mock execution.",
-            rule_id="policy.mock_runtime_allow",
+            reason="Request allowed for non-production governed execution.",
+            rule_id="policy.non_production_runtime_allow",
         )
     return None

@@ -95,7 +95,7 @@ def test_api_tool_dry_run_uses_registry_and_audit() -> None:
     )
 
     assert result.tool_name == "search_metadata"
-    assert result.status == "succeeded"
+    assert result.status == "failed"
     assert result.trace_id
     assert result.audit_refs
 

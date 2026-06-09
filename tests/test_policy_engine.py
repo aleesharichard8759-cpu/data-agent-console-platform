@@ -5,7 +5,7 @@ from data_governance_agent_runtime.core.models import Actor, RuntimeContext, Too
 from data_governance_agent_runtime.policy.engine import PolicyEngine
 
 
-def make_context(environment: Environment = Environment.MOCK) -> RuntimeContext:
+def make_context(environment: Environment = Environment.LOCAL) -> RuntimeContext:
     return RuntimeContext(
         actor=Actor(actor_id="tester", roles=("data_steward",)),
         environment=environment,

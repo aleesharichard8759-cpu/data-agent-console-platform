@@ -9,7 +9,6 @@ interface LayoutProps {
   navGroups: NavGroup[];
   tenant: string;
   userRole: UserRole;
-  apiMode: "mock" | "real";
   children: ReactNode;
   t: Translate;
   onNavigate: (route: RouteKey) => void;
@@ -17,8 +16,6 @@ interface LayoutProps {
   onLanguageChange: (language: Language) => void;
   onTenantChange: (tenant: string) => void;
   onUserRoleChange: (role: UserRole) => void;
-  onApiModeChange: (mode: "mock" | "real") => void;
-  onResetMockState: () => void;
   onExportConfig: () => void;
 }
 
@@ -38,7 +35,6 @@ export function Layout({
   navGroups,
   tenant,
   userRole,
-  apiMode,
   children,
   t,
   onNavigate,
@@ -46,8 +42,6 @@ export function Layout({
   onLanguageChange,
   onTenantChange,
   onUserRoleChange,
-  onApiModeChange,
-  onResetMockState,
   onExportConfig
 }: LayoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -188,15 +182,7 @@ export function Layout({
                   </label>
                 </div>
                 <div className="settings-section">
-                  <p className="topbar-label">{t("API 模式")}</p>
-                  <div className="env-switch" role="group" aria-label="API mode switcher">
-                    <button type="button" className={apiMode === "mock" ? "env-chip active" : "env-chip"} onClick={() => onApiModeChange("mock")}>
-                      Mock
-                    </button>
-                    <button type="button" className={apiMode === "real" ? "env-chip active" : "env-chip"} onClick={() => onApiModeChange("real")}>
-                      Real
-                    </button>
-                  </div>
+                  <p className="topbar-label">{t("真实 API")}</p>
                   <div className="settings-row">
                     <span className={`tag status-${healthStatus === "healthy" ? "active" : healthStatus === "unavailable" ? "open" : "tracking"}`}>
                       {t("后端健康")}：{t(healthStatus)}
@@ -209,9 +195,6 @@ export function Layout({
                 <div className="settings-section settings-actions">
                   <button type="button" className="secondary-button" onClick={onExportConfig}>
                     {t("导出当前配置 JSON")}
-                  </button>
-                  <button type="button" className="ghost-button danger" onClick={onResetMockState}>
-                    {t("清空本地 mock state")}
                   </button>
                 </div>
               </section>

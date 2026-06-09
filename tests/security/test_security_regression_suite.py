@@ -72,7 +72,7 @@ def test_g5_policy_request_is_denied_before_plan_mode() -> None:
             tool_name="governance_tool",
             action="permission.inspect",
             asset_type="permission",
-            parameters={"intent": "mock high risk"},
+            parameters={"intent": "high risk"},
             risk_level=ToolRiskLevel.HIGH,
             task_level="G5",
             requires_approval=True,
@@ -93,7 +93,7 @@ def test_g5_task_enters_plan_mode_and_cannot_be_approved() -> None:
     plan_id = result.required_approvals[0]["plan_id"]
 
     with pytest.raises(UnsafeOperationError):
-        engine.approve_plan(plan_id, "mock_security_reviewer")
+        engine.approve_plan(plan_id, "security_reviewer")
 
     assert task.task_level == "G5"
     assert result.status == "waiting_approval"
@@ -151,9 +151,9 @@ def test_security_outputs_do_not_contain_forbidden_plaintext_patterns() -> None:
     serialized = json.dumps(report.model_dump(mode="json"), ensure_ascii=False, sort_keys=True)
 
     for forbidden in (
-        "password=mock-secret",
-        "token=mock-secret",
-        "api_key=mock-secret",
+        "password=sample-secret",
+        "token=sample-secret",
+        "api_key=sample-secret",
         "plain_phone",
         "raw_customer_phone",
     ):

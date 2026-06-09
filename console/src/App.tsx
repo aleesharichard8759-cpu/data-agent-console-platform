@@ -4,7 +4,7 @@ import { DashboardPage } from "./components/DashboardPage";
 import { DataQAWorkspacePage } from "./components/DataQAWorkspacePage";
 import { Layout } from "./components/Layout";
 import { RuntimeWorkbenchPage } from "./components/RuntimeWorkbenchPage";
-import { navGroups, pageConfigByRoute, pageConfigs, routePaths, userJourneys } from "./data/mockData";
+import { navGroups, pageConfigByRoute, pageConfigs, routePaths, userJourneys } from "./data/pageConfig";
 import { createTranslator } from "./i18n";
 import type { EntityRow, Environment, Language, RouteKey, UserRole } from "./types";
 
@@ -25,7 +25,6 @@ function App() {
   const [language, setLanguage] = useState<Language>("zh-CN");
   const [tenant, setTenant] = useState("loctek");
   const [userRole, setUserRole] = useState<UserRole>("platform_admin");
-  const [apiMode, setApiMode] = useState<"mock" | "real">("mock");
   const [rowsByRoute, setRowsByRoute] = useState<Partial<Record<RouteKey, EntityRow[]>>>(() => buildInitialRows());
 
   useEffect(() => {
@@ -42,15 +41,11 @@ function App() {
     setActiveRoute(route);
   };
 
-  const resetMockState = () => {
-    setRowsByRoute(buildInitialRows());
-  };
-
   const exportConfig = () => {
     const payload = {
       tenant,
       userRole,
-      apiMode,
+      apiMode: "real",
       environment,
       exportedAt: new Date().toISOString(),
       rowsByRoute
@@ -74,15 +69,12 @@ function App() {
       navGroups={navGroups}
       tenant={tenant}
       userRole={userRole}
-      apiMode={apiMode}
       t={t}
       onNavigate={navigate}
       onEnvironmentChange={setEnvironment}
       onLanguageChange={setLanguage}
       onTenantChange={setTenant}
       onUserRoleChange={setUserRole}
-      onApiModeChange={setApiMode}
-      onResetMockState={resetMockState}
       onExportConfig={exportConfig}
     >
       {activeRoute === "runtime-workbench" ? (

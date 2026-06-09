@@ -28,7 +28,7 @@ class RuntimeContext(BaseModel):
 
     request_id: UUID = Field(default_factory=uuid4)
     actor: Actor
-    environment: Environment = Environment.MOCK
+    environment: Environment = Environment.LOCAL
     purpose: str
     approved_plan_id: UUID | None = None
 
@@ -133,4 +133,3 @@ class RuntimeResponse(BaseModel):
     results: tuple[ToolResult, ...] = Field(default_factory=tuple)
     plan: GovernancePlan | None = None
     audit_event_ids: tuple[UUID, ...] = Field(default_factory=tuple)
-

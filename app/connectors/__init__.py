@@ -1,4 +1,4 @@
-"""Connector abstractions and mock adapters for external governance systems."""
+"""Connector abstractions and real adapters for external governance systems."""
 
 from app.connectors.base import (
     BaseConnector,
@@ -11,6 +11,12 @@ from app.connectors.base import (
     ConnectorUnavailableError,
     StubConnector,
 )
+from app.connectors.factory import (
+    UnconfiguredMetadataConnector,
+    UnconfiguredWarehouseConnector,
+    build_metadata_connector_from_env,
+    build_warehouse_connector_from_env,
+)
 from app.connectors.interfaces import (
     LineageConnector,
     MaskingConnector,
@@ -22,18 +28,8 @@ from app.connectors.interfaces import (
     WarehouseConnector,
     WorkflowConnector,
 )
-from app.connectors.mocks import (
-    MockLineageConnector,
-    MockMaskingConnector,
-    MockMetadataConnector,
-    MockMetricConnector,
-    MockPermissionConnector,
-    MockQualityConnector,
-    MockSchedulerConnector,
-    MockWarehouseConnector,
-    MockWorkflowConnector,
-    build_mock_connectors,
-)
+from app.connectors.secrets import EnvSecretProvider, SecretResolutionError, StarRocksCredentials
+from app.connectors.starrocks import StarRocksMetadataConnector, StarRocksWarehouseConnector
 from app.connectors.stubs import (
     AtlasLineageConnector,
     DLPMaskingConnector,
@@ -57,31 +53,30 @@ __all__ = [
     "ConnectorTimeoutError",
     "ConnectorUnavailableError",
     "DLPMaskingConnector",
+    "EnvSecretProvider",
     "IAMPermissionConnector",
     "LineageConnector",
     "MaskingConnector",
     "MetadataConnector",
     "MetricConnector",
     "MetricPlatformConnector",
-    "MockLineageConnector",
-    "MockMaskingConnector",
-    "MockMetadataConnector",
-    "MockMetricConnector",
-    "MockPermissionConnector",
-    "MockQualityConnector",
-    "MockSchedulerConnector",
-    "MockWarehouseConnector",
-    "MockWorkflowConnector",
     "OpenMetadataConnector",
     "PermissionConnector",
     "QualityConnector",
     "QualityPlatformConnector",
     "SchedulerConnector",
+    "SecretResolutionError",
+    "StarRocksCredentials",
+    "StarRocksMetadataConnector",
+    "StarRocksWarehouseConnector",
     "StubConnector",
     "TicketWorkflowConnector",
+    "UnconfiguredMetadataConnector",
+    "UnconfiguredWarehouseConnector",
     "WarehouseConnector",
     "WarehouseEngineConnector",
     "WorkflowConnector",
     "WorkflowSchedulerConnector",
-    "build_mock_connectors",
+    "build_metadata_connector_from_env",
+    "build_warehouse_connector_from_env",
 ]

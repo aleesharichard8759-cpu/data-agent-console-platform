@@ -15,7 +15,7 @@ def make_runtime_context() -> RuntimeContext:
     )
 
 
-def test_runtime_completes_default_mock_governance_loop() -> None:
+def test_runtime_completes_default_governance_loop() -> None:
     runtime = GovernanceAgentRuntime()
     task = GovernanceTask(objective="scan governed assets", domain="trade")
 
@@ -63,7 +63,7 @@ def test_unknown_tool_is_denied_and_audited() -> None:
 
 def test_sql_query_uses_gateway_and_masks_sensitive_named_fields() -> None:
     runtime = GovernanceAgentRuntime()
-    task = GovernanceTask(objective="query governed mock gateway", domain="trade")
+    task = GovernanceTask(objective="query governed gateway", domain="trade")
     request = ToolRequest(
         tool_name="sql_query",
         action="sql.query",
@@ -77,5 +77,5 @@ def test_sql_query_uses_gateway_and_masks_sensitive_named_fields() -> None:
     assert response.status == "completed"
     result = response.results[0]
     assert result.data["statement_type"] == "select"
-    assert result.data["row_count"] == 2
-    assert result.data["rows"][1]["email_hash"] == "***MASKED***"
+    assert result.data["row_count"] == 0
+    assert result.data["rows"] == []

@@ -162,7 +162,7 @@ export function DataQAWorkspacePage({ language, t }: { language: Language; t: Tr
     try {
       await navigator.clipboard?.writeText(value);
     } catch {
-      // Clipboard access is optional in the mock console.
+      // Clipboard access is optional in the console.
     }
   };
 

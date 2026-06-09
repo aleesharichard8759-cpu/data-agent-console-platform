@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="datagent",
-        description="Mock Data Governance Agent Runtime CLI.",
+        description="Data Governance Agent Runtime CLI.",
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -114,7 +114,7 @@ def _list_audit(task_id: str | None) -> dict[str, Any]:
         "audit_refs": tuple(),
         "events": tuple(),
         "note": (
-            "CLI audit uses process-local mock memory; "
+            "CLI audit uses process-local memory; "
             "API audit should be used for live tasks."
         ),
     }

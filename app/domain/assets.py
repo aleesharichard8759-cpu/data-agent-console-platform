@@ -79,7 +79,7 @@ class DataAsset(DomainModel):
 
 class DatabaseAsset(DataAsset):
     database_type: str = Field(description="Database type, such as mysql, doris, or starrocks.")
-    environment: str = Field(description="Environment name, such as mock, dev, staging, or prod.")
+    environment: str = Field(description="Environment name, such as local, dev, staging, or prod.")
 
 
 class TableAsset(DataAsset):

@@ -31,6 +31,9 @@ class DataQAOrchestrator:
     governed DataTool calls so the product layer preserves runtime safety boundaries.
     """
 
+    RMA_ADS_TABLE = "ads_afs_rma_multi_dim_metric_1d"
+    RMA_TIME_FIELD = "stat_date"
+
     workflow_nodes: tuple[str, ...] = (
         "request_intake",
         "task_identification",
@@ -439,6 +442,13 @@ class DataQAOrchestrator:
     def _data_sources_for(task: StructuredTask, business_domain: DataDomain) -> tuple[str, ...]:
         if task.task_type == DataQATaskType.KNOWLEDGE_QA:
             return ("knowledge_base",)
+        is_rma_query = (
+            task.metric in {"complaint_rate", "problem_quantity"}
+            or "rma" in task.raw_query.lower()
+            or "客诉" in task.raw_query
+        )
+        if is_rma_query:
+            return (DataQAOrchestrator.RMA_ADS_TABLE, "starrocks_information_schema")
         if business_domain == DataDomain.FINANCE:
             return ("ads_trade_order_dashboard_day", "metric_platform")
         return ("ads_trade_order_dashboard_day", "openmetadata", "metric_platform")
@@ -473,16 +483,66 @@ class DataQAOrchestrator:
     @staticmethod
     def _sql_for(task: StructuredTask, intent: SemanticIntent) -> str:
         metric = (intent.standard_metrics[0] if intent.standard_metrics else "order_count")
+        if metric == "complaint_rate":
+            return DataQAOrchestrator._rma_metric_sql(
+                metric_expr=(
+                    "sum(problem_qty) / nullif(sum(sale_qty), 0)"
+                ),
+                alias="complaint_rate",
+                task=task,
+            )
+        if metric in {"problem_quantity", "rma_problem_quantity"}:
+            return DataQAOrchestrator._rma_metric_sql(
+                metric_expr="sum(problem_qty)",
+                alias="problem_quantity",
+                task=task,
+            )
         metric_expr = "count(order_id)" if metric == "order_count" else "sum(order_amount)"
         alias = "order_count" if metric == "order_count" else metric
         group_by = ", market" if "market" in task.dimensions else ""
         select_dimensions = "metric_date" + group_by
+        time_filter = (
+            f"metric_date = '{task.time_range_label}'"
+            if task.time_range_label
+            else "metric_date = current_date()"
+        )
         return (
             f"select {select_dimensions}, {metric_expr} as {alias} "
             "from ads_trade_order_dashboard_day "
-            f"where metric_date = '{task.time_range_label or 'mock_period'}' "
+            f"where {time_filter} "
             f"group by {select_dimensions} limit 100"
         )
+
+    @staticmethod
+    def _rma_metric_sql(metric_expr: str, alias: str, task: StructuredTask) -> str:
+        select_dimensions = ""
+        group_by_fields: list[str] = []
+        if "market" in task.dimensions:
+            select_dimensions = "market, "
+            group_by_fields.append("market")
+        time_filter = DataQAOrchestrator._rma_time_filter(task.time_range_label)
+        group_by_clause = f" group by {', '.join(group_by_fields)}" if group_by_fields else ""
+        return (
+            f"select {select_dimensions}{metric_expr} as {alias} "
+            f"from {DataQAOrchestrator.RMA_ADS_TABLE} "
+            f"where {time_filter}{group_by_clause} limit 100"
+        )
+
+    @staticmethod
+    def _rma_time_filter(time_range_label: str | None) -> str:
+        field = DataQAOrchestrator.RMA_TIME_FIELD
+        if time_range_label == "current_month":
+            return f"date_trunc('month', {field}) = date_trunc('month', current_date())"
+        if time_range_label == "last_month":
+            return (
+                f"{field} >= date_trunc('month', date_sub(current_date(), interval 1 month)) "
+                f"and {field} < date_trunc('month', current_date())"
+            )
+        if time_range_label == "current_year":
+            return f"date_trunc('year', {field}) = date_trunc('year', current_date())"
+        if time_range_label == "yesterday":
+            return f"{field} = date_sub(current_date(), interval 1 day)"
+        return f"{field} = current_date()"
 
     def _tool_request(
         self,
@@ -495,7 +555,12 @@ class DataQAOrchestrator:
                 tool_name="search_metadata",
                 action="metadata.query",
                 asset_type="metadata",
-                parameters={"query": "order", "limit": 5},
+                parameters={
+                    "query": "rma"
+                    if task.metric in {"complaint_rate", "problem_quantity"}
+                    else "order",
+                    "limit": 5,
+                },
                 risk_level=ToolRiskLevel.LOW,
             )
         if tool_name == "get_metric_definition":
@@ -513,9 +578,10 @@ class DataQAOrchestrator:
             parameters={
                 "sql": plan.sql
                 or (
-                    "select metric_date, count(order_id) "
-                    "from ads_trade_order_dashboard_day "
-                    "group by metric_date limit 100"
+                    f"select {DataQAOrchestrator.RMA_TIME_FIELD}, "
+                    "sum(problem_qty) / nullif(sum(sale_qty), 0) as complaint_rate "
+                    f"from {DataQAOrchestrator.RMA_ADS_TABLE} "
+                    f"group by {DataQAOrchestrator.RMA_TIME_FIELD} limit 100"
                 )
             },
             risk_level=ToolRiskLevel.LOW,
@@ -552,6 +618,9 @@ class DataQAOrchestrator:
             return "已按知识库边界回答，并标明规则来源和限制条件。"
         succeeded = any(item.get("status") == "succeeded" for item in evidence)
         prefix = "管理摘要：" if audience == AudienceRole.MANAGER else ""
+        value_summary = DataQAOrchestrator._metric_value_summary(task, evidence)
+        if value_summary:
+            return f"{prefix}{value_summary}，口径、来源和审计轨迹已记录。"
         status = "已完成受治理的 L1 查询" if succeeded else "查询未完成，需要复核工具结果"
         return f"{prefix}{status}，指标为 {metric}，结果包含口径、来源、限制条件和审计轨迹。"
 
@@ -559,10 +628,40 @@ class DataQAOrchestrator:
     def _metric_definition_for(task: StructuredTask) -> str | None:
         if task.metric is None:
             return None
+        if task.metric == "complaint_rate":
+            return (
+                "客诉率 = SUM(problem_qty) / NULLIF(SUM(sale_qty), 0)，"
+                "来源表 ads_afs_rma_multi_dim_metric_1d，默认时间字段 stat_date。"
+            )
         return (
             f"{task.metric} 使用治理后的标准指标口径；如需从明细临时计算，"
             "必须显式标记为临时分析口径。"
         )
+
+    @staticmethod
+    def _metric_value_summary(
+        task: StructuredTask,
+        evidence: tuple[dict[str, Any], ...],
+    ) -> str | None:
+        if task.metric is None:
+            return None
+        for item in evidence:
+            if item.get("tool") != "query_sql" or item.get("status") != "succeeded":
+                continue
+            data = item.get("output", {}).get("data", {})
+            rows = data.get("rows", [])
+            if not rows:
+                continue
+            row = rows[0]
+            if task.metric == "complaint_rate" and "complaint_rate" in row:
+                value = row["complaint_rate"]
+                try:
+                    return f"{task.time_range_label or '当前周期'} RMA 客诉率为 {float(value) * 100:.2f}%"
+                except (TypeError, ValueError):
+                    return f"{task.time_range_label or '当前周期'} RMA 客诉率为 {value}"
+            if task.metric in row:
+                return f"{task.time_range_label or '当前周期'} {task.metric} 为 {row[task.metric]}"
+        return None
 
     @staticmethod
     def _sources_for(intent: SemanticIntent, plan: ExecutionPlan) -> tuple[str, ...]:

@@ -34,7 +34,7 @@ class GovernancePlan(DomainModel):
     affected_assets: tuple[str, ...] = Field(description="Assets affected by the plan.")
     proposed_actions: tuple[str, ...] = Field(description="Proposed governance actions.")
     risk_level: GovernanceTaskLevel = Field(description="Highest governance risk level.")
-    required_approvers: tuple[str, ...] = Field(description="Mock approver ids required.")
+    required_approvers: tuple[str, ...] = Field(description="Approver ids required.")
     rollback_plan: str = Field(description="Rollback or recovery plan.")
     approval_required: bool = Field(description="Whether the plan requires approval.")
     allowed_tools_after_approval: tuple[str, ...] = Field(
@@ -192,7 +192,7 @@ class PlanModeManager:
             PlanModeState.WAITING_APPROVAL,
             AuditEventType.APPROVAL_REQUIRED,
             "plan.approval.request",
-            "Mock approval requested for governance plan.",
+            "Approval requested for governance plan.",
             plan=plan,
         )
         return plan
@@ -204,7 +204,7 @@ class PlanModeManager:
                 PlanModeState.REJECTED,
                 AuditEventType.PLAN_REJECTED,
                 "plan.approval.reject",
-                "G5 governance plans cannot be approved in mock plan mode.",
+                "G5 governance plans cannot be approved in local plan mode.",
                 plan=plan,
                 approver=approver,
             )
@@ -225,7 +225,7 @@ class PlanModeManager:
             PlanModeState.APPROVED,
             AuditEventType.PLAN_APPROVED,
             "plan.approval.approve",
-            "Governance plan approved by mock approver.",
+            "Governance plan approved by approver.",
             plan=plan,
             approver=approver,
         )

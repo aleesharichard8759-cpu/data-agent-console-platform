@@ -31,6 +31,14 @@ class ConnectorKind(StrEnum):
 class ConnectorConfig(DomainModel):
     name: str = Field(description="Connector instance name.")
     connector_kind: ConnectorKind = Field(description="Connector category.")
+    provider: str | None = Field(
+        default=None,
+        description="External system provider, such as starrocks or openmetadata.",
+    )
+    secret_ref: str | None = Field(
+        default=None,
+        description="Reference to credentials in a secret provider. Plaintext secrets are forbidden.",
+    )
     timeout_seconds: float = Field(
         default=5.0,
         ge=0.0,
@@ -42,7 +50,7 @@ class ConnectorConfig(DomainModel):
     )
     is_mock: bool = Field(
         default=True,
-        description="Whether this connector is a mock implementation.",
+        description="Whether this connector is a non-production test implementation.",
     )
 
 
@@ -88,7 +96,7 @@ SENSITIVE_KEY_TOKENS = (
 
 
 class BaseConnector:
-    """Shared connector safety wrapper. Real network calls are intentionally absent."""
+    """Shared connector safety wrapper for real and disabled connector implementations."""
 
     config: ConnectorConfig
 
@@ -105,7 +113,7 @@ class BaseConnector:
 
     def security_notes(self) -> tuple[str, ...]:
         return (
-            "Connector implementations must not read production credentials by default.",
+            "Connector implementations must resolve credentials only through secret_ref.",
             "Connector calls must use explicit timeout_seconds and audit every operation.",
             "Connector outputs must not include plaintext sensitive values or raw result sets.",
         )
@@ -128,7 +136,7 @@ class BaseConnector:
                 outcome="succeeded",
                 request_payload=request_payload,
                 result_payload=safe_result,
-                reason="Connector mock operation completed.",
+                reason="Connector operation completed.",
             )
             if isinstance(safe_result, dict):
                 safe_result.setdefault("audit_event_id", str(audit_event.event_id))

@@ -26,6 +26,7 @@ from app.tools import (
     DataToolRegistry,
     GenerateQualityRulesTool,
     GetMetricDefinitionTool,
+    GetTableMetadataTool,
     QuerySQLTool,
     SearchMetadataTool,
     ToolExecutionContext,
@@ -112,7 +113,7 @@ class TaskRunResult(DomainModel):
 
 
 class GovernanceEngine:
-    """Deterministic governance task loop. It does not call an LLM or real databases."""
+    """Deterministic governance task loop with policy-gated connector execution."""
 
     workflow_nodes: tuple[GovernanceStepNode, ...] = (
         GovernanceStepNode.REQUEST_INTAKE,
@@ -395,6 +396,7 @@ class GovernanceEngine:
     def _build_tool_registry(hook_manager: HookManager) -> DataToolRegistry:
         registry = DataToolRegistry(hook_manager=hook_manager)
         registry.register(SearchMetadataTool())
+        registry.register(GetTableMetadataTool())
         registry.register(GetMetricDefinitionTool())
         registry.register(GenerateQualityRulesTool())
         registry.register(QuerySQLTool())
@@ -414,8 +416,8 @@ class GovernanceEngine:
             affected_assets=(self._asset_hint(task),),
             proposed_actions=(self._proposed_action(task),),
             risk_level=task.task_level,
-            required_approvers=("mock_security_reviewer",),
-            rollback_plan="Keep the current mock governance state and discard proposed changes.",
+            required_approvers=("security_reviewer",),
+            rollback_plan="Keep the current governance state and discard proposed changes.",
             approval_required=True,
             allowed_tools_after_approval=("search_metadata", "get_metric_definition"),
         )
@@ -595,7 +597,7 @@ class GovernanceEngine:
             return "dwd_trade_order_detail_d"
         if task.domain == DataDomain.PRODUCT:
             return "dim_product_sku"
-        return "governed_mock_asset"
+        return "governed_asset"
 
     @staticmethod
     def _proposed_action(task: GovernanceTask) -> str:

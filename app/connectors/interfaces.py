@@ -23,7 +23,7 @@ class WarehouseConnector(BaseConnector, ABC):
 
     @abstractmethod
     def query_preview(self, sql: str, context: ConnectorCallContext) -> dict[str, Any]:
-        """Return a safe mock query preview after SQL Gateway review."""
+        """Return a safe query preview after SQL Gateway review."""
 
     @abstractmethod
     def get_column_profile(
@@ -116,7 +116,7 @@ class WorkflowConnector(BaseConnector, ABC):
         approvers: tuple[str, ...],
         context: ConnectorCallContext,
     ) -> dict[str, Any]:
-        """Create a mock approval ticket."""
+        """Create an approval ticket."""
 
 
 class SchedulerConnector(BaseConnector, ABC):
@@ -129,4 +129,4 @@ class SchedulerConnector(BaseConnector, ABC):
         parameters: dict[str, Any],
         context: ConnectorCallContext,
     ) -> dict[str, Any]:
-        """Submit a mock dry-run scheduling job."""
+        """Submit a dry-run scheduling job."""

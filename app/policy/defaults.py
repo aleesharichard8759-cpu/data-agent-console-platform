@@ -65,7 +65,7 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         PolicyRule(
             rule_id="default.allow_quality_rule_suggestion",
             name="Allow quality rule suggestion",
-            description="Generating mock quality-rule suggestions is allowed.",
+            description="Generating quality-rule suggestions is allowed.",
             effect=PolicyDecision.ALLOW,
             priority=125,
             match_operations=("quality_rule.suggest",),
@@ -75,20 +75,20 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         ),
         PolicyRule(
             rule_id="default.allow_quality_check_run",
-            name="Allow mock quality check",
-            description="Running mock quality checks is allowed.",
+            name="Allow quality check",
+            description="Running quality checks is allowed.",
             effect=PolicyDecision.ALLOW,
             priority=126,
             match_operations=("quality_check.run",),
             match_asset_types=("quality_rule", "table"),
             match_roles=any_governance_role,
-            reason="Mock quality check is allowed.",
+            reason="Quality check is allowed.",
         ),
         PolicyRule(
             rule_id="default.allow_column_profile_query",
             name="Allow safe column profile",
             description=(
-                "Safe mock column profiling is allowed when plaintext samples are not returned."
+                "Safe column profiling is allowed when plaintext samples are not returned."
             ),
             effect=PolicyDecision.ALLOW,
             priority=126,
@@ -100,7 +100,7 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         PolicyRule(
             rule_id="default.allow_lineage_query",
             name="Allow lineage query",
-            description="Mock lineage query is allowed for governed catalog assets.",
+            description="Lineage query is allowed for governed catalog assets.",
             effect=PolicyDecision.ALLOW,
             priority=126,
             match_operations=("lineage.query",),
@@ -111,7 +111,7 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         PolicyRule(
             rule_id="default.allow_sensitivity_classification",
             name="Allow sensitivity classification",
-            description="Mock sensitivity classification is allowed.",
+            description="Sensitivity classification is allowed.",
             effect=PolicyDecision.ALLOW,
             priority=127,
             match_operations=("sensitivity.classify",),
@@ -122,7 +122,7 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         PolicyRule(
             rule_id="default.allow_permission_check",
             name="Allow permission check",
-            description="Mock permission inspection is allowed.",
+            description="Permission inspection is allowed.",
             effect=PolicyDecision.ALLOW,
             priority=128,
             match_operations=("permission.check",),
@@ -133,7 +133,7 @@ def default_policy_rules() -> tuple[PolicyRule, ...]:
         PolicyRule(
             rule_id="default.allow_metric_card_generate",
             name="Allow metric card generation",
-            description="Generating a mock metric card is allowed.",
+            description="Generating a metric card is allowed.",
             effect=PolicyDecision.ALLOW,
             priority=129,
             match_operations=("metric.card.generate",),
